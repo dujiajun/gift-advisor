@@ -1,0 +1,13 @@
+{
+  "name": "gift-quest-miniprogram",
+  "version": "1.0.0",
+  "private": true,
+  "description": "这次送什么礼物 - 微信小程序端（TypeScript）",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "miniprogram-api-typings": "^5.2.3",
+    "typescript": "^7.0.2"
+  }
+}

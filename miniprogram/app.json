@@ -1,0 +1,13 @@
+{
+  "pages": ["pages/index/index", "pages/quiz/quiz"],
+  "window": {
+    "navigationBarBackgroundColor": "#FF8A3D",
+    "navigationBarTitleText": "这次送什么礼物",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#FFF3D6",
+    "backgroundTextStyle": "dark"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

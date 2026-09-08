@@ -1,0 +1,506 @@
+.page {
+  min-height: 100vh;
+  padding: 24rpx 32rpx 120rpx;
+  position: relative;
+}
+
+/* ---------- 顶栏 & 进度 ---------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  margin-bottom: 12rpx;
+  position: relative;
+  z-index: 1;
+}
+.back {
+  width: 80rpx;
+  height: 80rpx;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  background: #fffdf5;
+  border: 6rpx solid #33241a;
+  border-radius: 24rpx;
+  box-shadow: 0 8rpx 0 #33241a;
+}
+.back.pressed {
+  transform: translateY(8rpx);
+  box-shadow: none;
+}
+.progress-wrap {
+  flex: 1;
+  min-width: 0;
+}
+.progress-label {
+  font-size: 24rpx;
+  font-weight: 900;
+  margin-bottom: 8rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.progress-track {
+  height: 32rpx;
+  background: #fff;
+  border: 6rpx solid #33241a;
+  border-radius: 999rpx;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  border-radius: 999rpx;
+  background: repeating-linear-gradient(45deg, #ffb257 0 24rpx, #ff9a3d 24rpx 48rpx);
+  animation: stripes 1.2s linear infinite;
+  transition: width 0.5s cubic-bezier(0.3, 1.3, 0.5, 1);
+}
+.demo-badge {
+  flex: none;
+  font-size: 20rpx;
+  font-weight: 900;
+  color: #fff;
+  background: #9b8cff;
+  border: 4rpx solid #33241a;
+  border-radius: 999rpx;
+  padding: 4rpx 16rpx;
+}
+
+/* ---------- 参谋 NPC ---------- */
+.npc {
+  display: flex;
+  gap: 20rpx;
+  align-items: flex-start;
+  margin: 32rpx 0 28rpx;
+  position: relative;
+  z-index: 1;
+}
+.npc-avatar {
+  width: 104rpx;
+  height: 104rpx;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 56rpx;
+  background: #ffd45e;
+  border: 6rpx solid #33241a;
+  border-radius: 50%;
+  box-shadow: 0 8rpx 0 #33241a;
+  animation: bob 2.6s ease-in-out infinite;
+}
+.npc-bubble {
+  position: relative;
+  flex: 1;
+  background: #fffdf5;
+  border: 6rpx solid #33241a;
+  border-radius: 8rpx 36rpx 36rpx 36rpx;
+  box-shadow: 0 8rpx 0 #33241a;
+  padding: 24rpx 28rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  line-height: 1.6;
+  animation: pop 0.3s ease-out;
+  word-break: break-all;
+}
+.npc-bubble.thinking {
+  opacity: 0.85;
+}
+
+/* ---------- 错误 ---------- */
+.error-box {
+  background: #ffe3e3;
+  border: 6rpx solid #33241a;
+  border-radius: 32rpx;
+  box-shadow: 0 8rpx 0 #33241a;
+  padding: 24rpx 28rpx;
+  font-size: 28rpx;
+  font-weight: 700;
+  margin-bottom: 28rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+  position: relative;
+  z-index: 1;
+}
+.retry-btn {
+  flex: none;
+  font-size: 26rpx;
+  font-weight: 900;
+  color: #fff;
+  background: #ff8a3d;
+  border: 5rpx solid #33241a;
+  border-radius: 999rpx;
+  padding: 10rpx 28rpx;
+  box-shadow: 0 6rpx 0 #33241a;
+}
+.retry-btn.pressed {
+  transform: translateY(6rpx);
+  box-shadow: none;
+}
+
+/* ---------- 题目卡 ---------- */
+.quest-card {
+  background: #fffdf5;
+  border: 6rpx solid #33241a;
+  border-radius: 44rpx;
+  box-shadow: 0 12rpx 0 #33241a;
+  padding: 36rpx 32rpx 40rpx;
+  margin-bottom: 32rpx;
+  animation: bounceIn 0.45s cubic-bezier(0.2, 1.4, 0.4, 1);
+  position: relative;
+  z-index: 1;
+}
+.quest-tag {
+  display: inline-block;
+  font-size: 22rpx;
+  font-weight: 900;
+  color: #fff;
+  background: #9b8cff;
+  border: 4rpx solid #33241a;
+  border-radius: 999rpx;
+  padding: 4rpx 24rpx;
+  margin-bottom: 20rpx;
+}
+.quest-text {
+  font-size: 40rpx;
+  font-weight: 900;
+  line-height: 1.5;
+}
+
+/* ---------- 选项 ---------- */
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  position: relative;
+  z-index: 1;
+}
+.options .option-btn {
+  width: 48.5%;
+  border: 6rpx solid #33241a;
+  border-radius: 32rpx;
+  padding: 28rpx 20rpx;
+  font-size: 32rpx;
+  font-weight: 800;
+  color: #33241a;
+  box-shadow: 0 10rpx 0 #33241a;
+  text-align: center;
+  line-height: 1.4;
+  margin-bottom: 24rpx;
+  animation: pop 0.3s ease-out backwards;
+}
+.options.single .option-btn {
+  width: 100%;
+  padding: 32rpx 24rpx;
+}
+.option-btn.opt-0 { background: #ffd45e; }
+.option-btn.opt-1 { background: #52cf9f; }
+.option-btn.opt-2 { background: #ff9ecf; }
+.option-btn.opt-3 { background: #9b8cff; color: #fff; }
+.option-btn.pressed {
+  transform: translateY(10rpx);
+  box-shadow: 0 0 0 #33241a;
+}
+.opt-emoji {
+  font-size: 40rpx;
+  margin-right: 8rpx;
+}
+
+/* ---------- 自由输入 ---------- */
+.custom-box {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 28rpx;
+  position: relative;
+  z-index: 1;
+}
+.custom-input {
+  flex: 1;
+  min-width: 0;
+  height: 92rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #33241a;
+  background: #fff;
+  border: 6rpx solid #33241a;
+  border-radius: 28rpx;
+  padding: 0 28rpx;
+}
+.send-btn {
+  flex: none;
+  font-size: 30rpx;
+  font-weight: 900;
+  color: #fff;
+  background: linear-gradient(180deg, #ff8a3d, #e86f1f);
+  border: 6rpx solid #33241a;
+  border-radius: 28rpx;
+  box-shadow: 0 8rpx 0 #33241a;
+  padding: 0 36rpx;
+}
+.send-btn.pressed {
+  transform: translateY(8rpx);
+  box-shadow: none;
+}
+.send-btn.is-disabled {
+  opacity: 0.5;
+}
+
+.finish-early {
+  display: block;
+  margin: 32rpx auto 0;
+  font-size: 26rpx;
+  font-weight: 800;
+  color: #33241a;
+  opacity: 0.7;
+  text-decoration: underline;
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------- 加载 ---------- */
+.loading-card {
+  text-align: center;
+  padding: 68rpx 0;
+  background: rgba(255, 253, 245, 0.75);
+  border: 6rpx dashed #33241a;
+  border-radius: 44rpx;
+  position: relative;
+  z-index: 1;
+}
+.loading-gift {
+  font-size: 112rpx;
+  animation: shake 1s ease-in-out infinite;
+}
+.loading-text {
+  margin-top: 24rpx;
+  font-size: 30rpx;
+  font-weight: 800;
+}
+
+/* ---------- 报告 ---------- */
+.report-title {
+  text-align: center;
+  font-size: 48rpx;
+  font-weight: 900;
+  margin: 36rpx 0 12rpx;
+  animation: bounceIn 0.5s cubic-bezier(0.2, 1.4, 0.4, 1);
+  position: relative;
+  z-index: 1;
+}
+.report-intro {
+  text-align: center;
+  font-size: 28rpx;
+  font-weight: 600;
+  opacity: 0.85;
+  margin-bottom: 32rpx;
+  line-height: 1.7;
+  position: relative;
+  z-index: 1;
+}
+.gift-card {
+  position: relative;
+  background: #fffdf5;
+  border: 6rpx solid #33241a;
+  border-radius: 44rpx;
+  box-shadow: 0 12rpx 0 #33241a;
+  padding: 40rpx 32rpx 32rpx;
+  margin: 28rpx 0 40rpx;
+  animation: bounceIn 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) backwards;
+  z-index: 1;
+}
+.gift-rank {
+  position: absolute;
+  top: -26rpx;
+  left: 28rpx;
+  font-size: 24rpx;
+  font-weight: 900;
+  background: #ffd45e;
+  border: 5rpx solid #33241a;
+  border-radius: 999rpx;
+  padding: 6rpx 24rpx;
+  box-shadow: 0 6rpx 0 #33241a;
+}
+.gift-head {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  margin: 12rpx 0 28rpx;
+}
+.gift-emoji {
+  width: 128rpx;
+  height: 128rpx;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 76rpx;
+  background: #fff;
+  border: 6rpx solid #33241a;
+  border-radius: 32rpx;
+  box-shadow: 0 8rpx 0 #33241a;
+}
+.gift-meta {
+  flex: 1;
+  min-width: 0;
+}
+.gift-name {
+  font-size: 38rpx;
+  font-weight: 900;
+  line-height: 1.35;
+}
+.gift-price {
+  display: inline-block;
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  font-weight: 900;
+  background: #52cf9f;
+  border: 4rpx solid #33241a;
+  border-radius: 999rpx;
+  padding: 4rpx 20rpx;
+}
+.match-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-bottom: 24rpx;
+}
+.match-label {
+  font-size: 22rpx;
+  font-weight: 900;
+  flex: none;
+}
+.match-track {
+  flex: 1;
+  height: 24rpx;
+  background: #fff;
+  border: 5rpx solid #33241a;
+  border-radius: 999rpx;
+  overflow: hidden;
+}
+.match-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff8a3d, #ff9ecf);
+  border-radius: 999rpx;
+  animation: grow 0.9s cubic-bezier(0.2, 1.2, 0.4, 1) backwards;
+}
+.match-num {
+  font-size: 24rpx;
+  font-weight: 900;
+  flex: none;
+}
+.gift-reason {
+  font-size: 28rpx;
+  line-height: 1.7;
+  font-weight: 600;
+  margin-bottom: 20rpx;
+}
+.gift-tip {
+  font-size: 26rpx;
+  line-height: 1.6;
+  font-weight: 600;
+  background: #fff7e0;
+  border: 5rpx dashed #33241a;
+  border-radius: 24rpx;
+  padding: 16rpx 24rpx;
+  margin-bottom: 20rpx;
+}
+.gift-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+.tag {
+  font-size: 22rpx;
+  font-weight: 800;
+  background: #f1ead9;
+  border: 4rpx solid #33241a;
+  border-radius: 999rpx;
+  padding: 4rpx 18rpx;
+}
+.report-actions {
+  display: flex;
+  gap: 24rpx;
+  margin-top: 44rpx;
+  position: relative;
+  z-index: 1;
+}
+.btn-again,
+.btn-copy {
+  flex: 1;
+  padding: 30rpx 0;
+  font-size: 32rpx;
+  font-weight: 900;
+  border: 6rpx solid #33241a;
+  border-radius: 999rpx;
+  box-shadow: 0 10rpx 0 #33241a;
+}
+.btn-again {
+  color: #fff;
+  background: linear-gradient(180deg, #ff8a3d, #e86f1f);
+}
+.btn-copy {
+  color: #33241a;
+  background: #fffdf5;
+}
+.btn-again.pressed,
+.btn-copy.pressed {
+  transform: translateY(10rpx);
+  box-shadow: none;
+}
+
+/* ---------- 彩带 ---------- */
+.confetti {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100vh;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 2;
+}
+.cf {
+  position: absolute;
+  top: -60rpx;
+  animation: fall linear infinite;
+}
+.cf0 { left: 8%;  font-size: 40rpx; animation-duration: 6s; animation-delay: 0s; }
+.cf1 { left: 22%; font-size: 30rpx; animation-duration: 7s; animation-delay: 0.7s; }
+.cf2 { left: 36%; font-size: 44rpx; animation-duration: 5.5s; animation-delay: 1.4s; }
+.cf3 { left: 50%; font-size: 30rpx; animation-duration: 8s; animation-delay: 2.1s; }
+.cf4 { left: 63%; font-size: 36rpx; animation-duration: 6.5s; animation-delay: 0.4s; }
+.cf5 { left: 75%; font-size: 30rpx; animation-duration: 7.5s; animation-delay: 1.1s; }
+.cf6 { left: 86%; font-size: 40rpx; animation-duration: 6s; animation-delay: 1.8s; }
+.cf7 { left: 94%; font-size: 32rpx; animation-duration: 8.5s; animation-delay: 0.2s; }
+
+/* ---------- 动画 ---------- */
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-14rpx); }
+}
+@keyframes bounceIn {
+  0% { opacity: 0; transform: scale(0.72) translateY(48rpx); }
+  60% { opacity: 1; transform: scale(1.04) translateY(-8rpx); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes pop {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes shake {
+  0%, 100% { transform: rotate(-7deg); }
+  50% { transform: rotate(7deg) scale(1.05); }
+}
+@keyframes stripes {
+  to { background-position: 68rpx 0; }
+}
+@keyframes grow {
+  from { width: 0; }
+}
+@keyframes fall {
+  from { transform: translateY(0) rotate(0deg); }
+  to { transform: translateY(115vh) rotate(340deg); }
+}

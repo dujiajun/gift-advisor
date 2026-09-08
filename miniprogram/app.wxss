@@ -1,0 +1,29 @@
+/* ============ 这次送什么礼物 · 全局样式（游戏卡通风） ============ */
+
+page {
+  min-height: 100%;
+  color: #33241a;
+  font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', 'Microsoft YaHei', sans-serif;
+  background: linear-gradient(180deg, #9fdcff 0%, #c9ecff 24%, #fff3d6 62%, #ffe1ee 100%);
+}
+
+view,
+text,
+button,
+input {
+  box-sizing: border-box;
+}
+
+button {
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  line-height: inherit;
+  font-size: inherit;
+  color: inherit;
+  border-radius: 0;
+}
+
+button::after {
+  border: none;
+}

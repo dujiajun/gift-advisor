@@ -1,0 +1,114 @@
+<view class="page">
+  <view class="topbar">
+    <view class="back" hover-class="pressed" bindtap="goHome">🏠</view>
+    <view class="progress-wrap">
+      <view class="progress-label">
+        <text>{{report ? '🏆 任务完成！' : '任务进度 第 ' + askedCount + ' / 10 问'}}</text>
+        <text wx:if="{{demo}}" class="demo-badge">演示模式</text>
+      </view>
+      <view class="progress-track">
+        <view class="progress-fill" style="width: {{progress}}%"></view>
+      </view>
+    </view>
+  </view>
+
+  <view class="npc">
+    <view class="npc-avatar">🧙</view>
+    <view class="npc-bubble {{loading ? 'thinking' : ''}}">
+      <text wx:if="{{loading}}">{{loadingText}}</text>
+      <text wx:else>{{narration || '参谋已就位！'}}</text>
+    </view>
+  </view>
+
+  <view wx:if="{{error}}" class="error-box">
+    <text>⚠️ {{error}}</text>
+    <view class="retry-btn" hover-class="pressed" bindtap="retry">重试</view>
+  </view>
+
+  <view wx:if="{{loading}}" class="loading-card">
+    <view class="loading-gift">🎁</view>
+    <view class="loading-text">{{loadingText}}</view>
+  </view>
+
+  <block wx:elif="{{question}}">
+    <view class="quest-card">
+      <view class="quest-tag">第 {{askedCount + 1}} 问</view>
+      <view class="quest-text">{{question}}</view>
+    </view>
+
+    <view class="options {{options.length <= 2 ? 'single' : ''}}">
+      <view
+        wx:for="{{options}}"
+        wx:key="label"
+        class="option-btn opt-{{index}}"
+        style="animation-delay: {{index * 0.05}}s"
+        hover-class="pressed"
+        data-value="{{item.label}}"
+        bindtap="pickOption"
+      >
+        <text class="opt-emoji">{{item.emoji}}</text> {{item.label}}
+      </view>
+    </view>
+
+    <view class="custom-box">
+      <input
+        class="custom-input"
+        value="{{inputValue}}"
+        placeholder="都不满意？自己说说看…"
+        maxlength="100"
+        confirm-type="done"
+        bindinput="onInput"
+        bindconfirm="submitCustom"
+      />
+      <button class="send-btn {{inputValue ? '' : 'is-disabled'}}" hover-class="pressed" bindtap="submitCustom">送出</button>
+    </view>
+
+    <view wx:if="{{askedCount >= 5}}" class="finish-early" bindtap="finishEarly">🎉 差不多了，直接看结果</view>
+  </block>
+
+  <block wx:if="{{report}}">
+    <view class="confetti">
+      <text class="cf cf0">🎉</text>
+      <text class="cf cf1">✨</text>
+      <text class="cf cf2">🎊</text>
+      <text class="cf cf3">💛</text>
+      <text class="cf cf4">⭐</text>
+      <text class="cf cf5">💖</text>
+      <text class="cf cf6">✨</text>
+      <text class="cf cf7">🎉</text>
+    </view>
+
+    <view class="report-title">🏆 参谋的礼物图鉴</view>
+    <view wx:if="{{report.intro}}" class="report-intro">{{report.intro}}</view>
+
+    <view wx:for="{{report.gifts}}" wx:key="name" class="gift-card" style="animation-delay: {{index * 0.12}}s">
+      <view class="gift-rank">{{index === 0 ? '🥇 首推' : (index === 1 ? '🥈 备选' : '🥉 备选')}}</view>
+      <view class="gift-head">
+        <view class="gift-emoji">{{item.emoji}}</view>
+        <view class="gift-meta">
+          <view class="gift-name">{{item.name}}</view>
+          <view class="gift-price">💰 {{item.price}}</view>
+        </view>
+      </view>
+      <view class="match-row">
+        <text class="match-label">匹配度</text>
+        <view class="match-track">
+          <view class="match-fill" style="width: {{item.match}}%"></view>
+        </view>
+        <text class="match-num">{{item.match}}%</text>
+      </view>
+      <view wx:if="{{item.reason}}" class="gift-reason">{{item.reason}}</view>
+      <view wx:if="{{item.tip}}" class="gift-tip">💡 {{item.tip}}</view>
+      <view wx:if="{{item.tags.length}}" class="gift-tags">
+        <text wx:for="{{item.tags}}" wx:for-item="t" wx:key="*this" class="tag">{{t}}</text>
+      </view>
+    </view>
+
+    <view class="report-actions">
+      <button class="btn-again" hover-class="pressed" bindtap="start">🔁 再问一次</button>
+      <button class="btn-copy" hover-class="pressed" bindtap="copyReport">📋 复制报告</button>
+    </view>
+  </block>
+
+  <view class="footer">AI 生成结果仅供参考 · 送出心意最珍贵 💖</view>
+</view>
