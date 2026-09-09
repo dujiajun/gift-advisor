@@ -35,6 +35,8 @@ export class CloudBaseSessionStore implements SessionStore {
         env: process.env.CLOUD_ENV_ID || SYMBOL_CURRENT_ENV,
         secretId: process.env.TCB_SECRET_ID || undefined,
         secretKey: process.env.TCB_SECRET_KEY || undefined,
+        // 临时密钥（如 CI / 本地联调）必须携带 token，长期密钥留空即可
+        sessionToken: process.env.TCB_SESSION_TOKEN || undefined,
       });
       return app.database().collection('agent_sessions') as unknown as TcbCollection;
     })();
@@ -50,7 +52,9 @@ export class CloudBaseSessionStore implements SessionStore {
     const res = await col.doc(sessionId).get();
     const data = Array.isArray(res.data) ? res.data[0] : res.data;
     if (!isRecord(data)) return null;
-    const { id, userId, ip, ...rest } = data as Record<string, unknown>;
+    // 文档主键 _id 必须剔除：留在 rest 里会随会话对象在下次 save 时写回，
+    // 服务端拒绝更新已存在文档的 _id（"不能更新 _id 的值"）
+    const { _id, id, userId, ip, ...rest } = data as Record<string, unknown>;
     return {
       ...(rest as unknown as Omit<AgentSession, 'id' | 'userId' | 'ip'>),
       userId: typeof userId === 'string' ? userId : '',
@@ -61,7 +65,12 @@ export class CloudBaseSessionStore implements SessionStore {
 
   async save(session: AgentSession): Promise<void> {
     const col = await this.collection();
-    const { id, ...doc } = { ...session, updatedAt: new Date().toISOString() };
+    // _id 与 id 都不能进载荷：文档主键由 doc(id) 指定，携带 _id 更新已存在文档会被
+    // 服务端拒绝。find() 已在上游剥离 _id，这里防御性再剥一次（类型上如实标注）
+    const { _id, id, ...doc } = {
+      ...session,
+      updatedAt: new Date().toISOString(),
+    } as AgentSession & { _id?: unknown };
     await col.doc(id).set(doc);
   }
 }

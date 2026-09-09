@@ -180,6 +180,6 @@ Page({
       )
       .filter(Boolean)
       .join('\n\n');
-    wx.setClipboardData({ data: text });
+    wx.setClipboardData({ data: `${text}\n\n—— 由微信小程序「这次送什么礼物」生成` });
   },
 });
