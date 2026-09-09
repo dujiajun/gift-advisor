@@ -57,6 +57,11 @@ pnpm build:function        # → packages/gift-agent/index.js（单文件 CJS，
 
 > `functionRootPath` 指向 `packages/`，函数名 `gift-agent` 对应 `packages/gift-agent/` 子目录；上传内容以构建产物 `index.js` + `package.json` 为准（`ignore` 排除源码与构建工具）。
 
+> ⚠️ 实测（2026-09-09）：MCP `manageFunctions(action="updateFunctionCode")` 反复报
+> `ResourceNotFound.Package — baseCodeCosInfo Failed`（ignore 未生效、node_modules 被打进包）。
+> 可靠路径是 **tcb CLI**：仓库根目录已有 `cloudbaserc.json`（含 ignore 与环境变量），执行
+> `tcb fn code update gift-agent` 即可；更新配置用 `tcb fn config update gift-agent`。
+
 ### 方式 B：控制台手动上传
 
 云函数控制台 → 新建函数（运行时 Node.js 20+，超时 ≥120s，内存 256MB）→ 本地 `pnpm build:function` 后，把 `packages/gift-agent/` 下的 `index.js` 与 `package.json` 打 zip 上传 → 在函数配置里添加环境变量（同上）。

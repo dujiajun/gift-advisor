@@ -27,10 +27,12 @@ export class CloudBaseSessionStore implements SessionStore {
 
   private collection(): Promise<TcbCollection> {
     this.collectionPromise ??= (async () => {
-      const CloudBase = (await import('@cloudbase/node-sdk')).default;
-      const app = CloudBase.init({
+      // node-sdk 是 CJS 具名导出（无 default）——经打包器处理后 .default 为 undefined，
+      // 必须按具名解构（本地 tsx/Next 的 ESM 互操作掩盖过这个问题）
+      const { init, SYMBOL_CURRENT_ENV } = await import('@cloudbase/node-sdk');
+      const app = init({
         // 云函数内免密钥（SYMBOL_CURRENT_ENV = 当前函数所在环境）；跨端部署需显式 CLOUD_ENV_ID
-        env: process.env.CLOUD_ENV_ID || CloudBase.SYMBOL_CURRENT_ENV,
+        env: process.env.CLOUD_ENV_ID || SYMBOL_CURRENT_ENV,
         secretId: process.env.TCB_SECRET_ID || undefined,
         secretKey: process.env.TCB_SECRET_KEY || undefined,
       });

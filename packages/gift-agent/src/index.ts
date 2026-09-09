@@ -47,8 +47,9 @@ function getStore(): Promise<SessionStore> {
 /** 提取调用者身份：云函数内由平台注入（小程序调用带微信身份）；本地试跑返回空 */
 async function getAgentContext(): Promise<AgentContext> {
   try {
-    const CloudBase = (await import('@cloudbase/node-sdk')).default;
-    const app = CloudBase.init({ env: process.env.CLOUD_ENV_ID || CloudBase.SYMBOL_CURRENT_ENV });
+    // CJS 具名导出，不能用 .default（见 session-store-cloudbase 同款注释）
+    const { init, SYMBOL_CURRENT_ENV } = await import('@cloudbase/node-sdk');
+    const app = init({ env: process.env.CLOUD_ENV_ID || SYMBOL_CURRENT_ENV });
     const auth = app.auth();
     const info = auth.getUserInfo() as unknown;
     const openId = isRecord(info) && typeof info.openId === 'string' ? info.openId : '';

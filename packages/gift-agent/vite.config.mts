@@ -56,6 +56,11 @@ export default defineConfig({
     alias: {
       '@': resolve(here, 'src'),
     },
+    // Node 运行时产物必须禁用 browser 解析：form-data 的 browser 字段会把 main
+    // 换成 lib/browser.js（self.FormData : window.FormData），在云函数/Node 里加载即崩，
+    // 连带 @cloudbase/node-sdk 的导出损坏（"init is not a function"）
+    mainFields: ['module', 'main'],
+    conditions: ['node', 'import', 'require', 'default'],
   },
   build: {
     lib: {

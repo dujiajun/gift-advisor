@@ -25,3 +25,4 @@ packages/gift-agent/index.js
 
 # typescript incremental cache
 *.tsbuildinfo
+cloudbaserc.json
