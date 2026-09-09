@@ -36,6 +36,9 @@ importers:
 
   packages/gift-agent:
     dependencies:
+      '@cloudbase/node-sdk':
+        specifier: ^3.18.3
+        version: 3.18.3
       '@gift-advisor/agent-core':
         specifier: workspace:*
         version: link:../agent-core

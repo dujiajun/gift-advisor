@@ -1,3 +1,5 @@
 packages:
   - 'packages/*'
   - 'cloudfunctions/*'
+allowBuilds:
+  core-js-pure: true
