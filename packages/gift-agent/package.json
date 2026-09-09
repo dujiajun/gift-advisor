@@ -3,20 +3,22 @@
   "version": "1.0.0",
   "private": true,
   "description": "「这次送什么礼物」云函数（CloudBase Event Function）：复用 @gift-advisor/agent-core 的服务端 Agent，小程序经 wx.cloud.callFunction 调用",
-  "engines": {
-    "node": ">=24"
-  },
   "main": "index.js",
   "scripts": {
     "build": "vite build",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@gift-advisor/agent-core": "workspace:*"
+    "@gift-advisor/agent-core": "workspace:*",
+    "@gift-advisor/session-store-cloudbase": "workspace:*",
+    "@gift-advisor/session-store-sqlite": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
     "typescript": "^7.0.2",
     "vite": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=24"
   }
 }

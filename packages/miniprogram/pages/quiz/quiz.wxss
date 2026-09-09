@@ -196,10 +196,19 @@
   width: 100%;
   padding: 32rpx 24rpx;
 }
-.option-btn.opt-0 { background: #ffd45e; }
-.option-btn.opt-1 { background: #52cf9f; }
-.option-btn.opt-2 { background: #ff9ecf; }
-.option-btn.opt-3 { background: #9b8cff; color: #fff; }
+.option-btn.opt-0 {
+  background: #ffd45e;
+}
+.option-btn.opt-1 {
+  background: #52cf9f;
+}
+.option-btn.opt-2 {
+  background: #ff9ecf;
+}
+.option-btn.opt-3 {
+  background: #9b8cff;
+  color: #fff;
+}
 .option-btn.pressed {
   transform: translateY(10rpx);
   box-shadow: 0 0 0 #33241a;
@@ -467,40 +476,113 @@
   top: -60rpx;
   animation: fall linear infinite;
 }
-.cf0 { left: 8%;  font-size: 40rpx; animation-duration: 6s; animation-delay: 0s; }
-.cf1 { left: 22%; font-size: 30rpx; animation-duration: 7s; animation-delay: 0.7s; }
-.cf2 { left: 36%; font-size: 44rpx; animation-duration: 5.5s; animation-delay: 1.4s; }
-.cf3 { left: 50%; font-size: 30rpx; animation-duration: 8s; animation-delay: 2.1s; }
-.cf4 { left: 63%; font-size: 36rpx; animation-duration: 6.5s; animation-delay: 0.4s; }
-.cf5 { left: 75%; font-size: 30rpx; animation-duration: 7.5s; animation-delay: 1.1s; }
-.cf6 { left: 86%; font-size: 40rpx; animation-duration: 6s; animation-delay: 1.8s; }
-.cf7 { left: 94%; font-size: 32rpx; animation-duration: 8.5s; animation-delay: 0.2s; }
+.cf0 {
+  left: 8%;
+  font-size: 40rpx;
+  animation-duration: 6s;
+  animation-delay: 0s;
+}
+.cf1 {
+  left: 22%;
+  font-size: 30rpx;
+  animation-duration: 7s;
+  animation-delay: 0.7s;
+}
+.cf2 {
+  left: 36%;
+  font-size: 44rpx;
+  animation-duration: 5.5s;
+  animation-delay: 1.4s;
+}
+.cf3 {
+  left: 50%;
+  font-size: 30rpx;
+  animation-duration: 8s;
+  animation-delay: 2.1s;
+}
+.cf4 {
+  left: 63%;
+  font-size: 36rpx;
+  animation-duration: 6.5s;
+  animation-delay: 0.4s;
+}
+.cf5 {
+  left: 75%;
+  font-size: 30rpx;
+  animation-duration: 7.5s;
+  animation-delay: 1.1s;
+}
+.cf6 {
+  left: 86%;
+  font-size: 40rpx;
+  animation-duration: 6s;
+  animation-delay: 1.8s;
+}
+.cf7 {
+  left: 94%;
+  font-size: 32rpx;
+  animation-duration: 8.5s;
+  animation-delay: 0.2s;
+}
 
 /* ---------- 动画 ---------- */
 @keyframes bob {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-14rpx); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-14rpx);
+  }
 }
 @keyframes bounceIn {
-  0% { opacity: 0; transform: scale(0.72) translateY(48rpx); }
-  60% { opacity: 1; transform: scale(1.04) translateY(-8rpx); }
-  100% { opacity: 1; transform: scale(1) translateY(0); }
+  0% {
+    opacity: 0;
+    transform: scale(0.72) translateY(48rpx);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.04) translateY(-8rpx);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 @keyframes pop {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 @keyframes shake {
-  0%, 100% { transform: rotate(-7deg); }
-  50% { transform: rotate(7deg) scale(1.05); }
+  0%,
+  100% {
+    transform: rotate(-7deg);
+  }
+  50% {
+    transform: rotate(7deg) scale(1.05);
+  }
 }
 @keyframes stripes {
-  to { background-position: 68rpx 0; }
+  to {
+    background-position: 68rpx 0;
+  }
 }
 @keyframes grow {
-  from { width: 0; }
+  from {
+    width: 0;
+  }
 }
 @keyframes fall {
-  from { transform: translateY(0) rotate(0deg); }
-  to { transform: translateY(115vh) rotate(340deg); }
+  from {
+    transform: translateY(0) rotate(0deg);
+  }
+  to {
+    transform: translateY(115vh) rotate(340deg);
+  }
 }

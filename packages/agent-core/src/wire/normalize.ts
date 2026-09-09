@@ -1,5 +1,5 @@
-import type { Gift, QuestionOption, Report } from '../types';
-import { isRecord } from './json';
+import type { Gift, QuestionOption, Report } from '@gift-advisor/agent-core/types';
+import { isRecord } from '@gift-advisor/agent-core/wire/json';
 
 /**
  * 规整 agent（LLM）给出的业务数据：选项与礼物报告。

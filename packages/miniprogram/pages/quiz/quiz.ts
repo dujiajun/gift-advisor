@@ -1,5 +1,4 @@
-import { callAgent, countAsked } from '../../utils/api';
-import type { QuestionOption, Report } from '../../utils/api';
+import { callAgent, clearSavedSession, savedSessionId, SESSION_KEY, type Report } from '../../utils/api';
 
 const FINISH_EARLY_TEXT = '（用户不想再答更多问题了，请直接根据已有信息给出最终推荐）';
 
@@ -8,14 +7,13 @@ interface QuizData {
   loadingText: string;
   narration: string;
   question: string;
-  options: QuestionOption[];
+  options: { label: string; emoji: string }[];
   askedCount: number;
   progress: number;
   inputValue: string;
   report: Report | null;
   error: string;
   demo: boolean;
-  messages: unknown[];
 }
 
 Page({
@@ -31,17 +29,31 @@ Page({
     report: null,
     error: '',
     demo: false,
-    messages: [],
   } as QuizData,
 
+  sessionId: '' as string,
   lastAnswer: '' as string,
 
   onLoad() {
-    this.start();
+    // 本地有保存的 sessionId 则恢复现场（当前问题或最终报告），否则开始新会话
+    const saved = savedSessionId();
+    if (saved) {
+      this.sessionId = saved;
+      this.lastAnswer = '';
+      this.request({ action: 'resume', sessionId: saved }, '');
+    } else {
+      this.start();
+    }
+  },
+
+  onUnload() {
+    // 退出页面保留 sessionId（本地存储），下次进入可 resume 接续
   },
 
   start() {
+    this.sessionId = '';
     this.lastAnswer = '';
+    clearSavedSession();
     this.setData({
       loading: true,
       error: '',
@@ -49,17 +61,17 @@ Page({
       question: '',
       options: [],
       narration: '',
-      messages: [],
       askedCount: 0,
       progress: 0,
       inputValue: '',
       loadingText: '参谋正在赶来…',
     });
-    this.request([], undefined);
+    this.request({ action: 'start' }, '');
   },
 
-  request(messages: unknown[], answer?: string) {
-    this.lastAnswer = answer || '';
+  /** 发起请求并把响应落到页面状态；resumeFail 为 true 时 resume 失败自动开新会话 */
+  request(req: Parameters<typeof callAgent>[0], lastAnswer: string, resumeFail = false) {
+    this.lastAnswer = lastAnswer;
     const canFinish = this.data.askedCount >= 5;
     this.setData({
       loading: true,
@@ -67,11 +79,14 @@ Page({
       loadingText: canFinish ? '参谋正在挑选压箱底的宝贝…' : '参谋思考中…',
     });
 
-    callAgent(messages, answer)
+    callAgent(req)
       .then((data) => {
-        const askedCount = countAsked(data.messages);
+        if (data.sessionId) {
+          this.sessionId = data.sessionId;
+          wx.setStorageSync(SESSION_KEY, data.sessionId);
+        }
+        const askedCount = data.pending?.askedCount ?? data.askedCount ?? 0;
         const base = {
-          messages: data.messages,
           demo: Boolean(data.demo),
           askedCount,
           progress: Math.min(100, (askedCount / 10) * 100),
@@ -101,13 +116,23 @@ Page({
         }
       })
       .catch((err: unknown) => {
+        // resume 的会话已失效：清掉本地记录，自动开始新会话
+        if (resumeFail) {
+          clearSavedSession();
+          this.start();
+          return;
+        }
         const msg = err instanceof Error ? err.message : '网络开小差了，请重试';
         this.setData({ loading: false, error: msg });
       });
   },
 
   retry() {
-    this.request(this.data.messages, this.lastAnswer || undefined);
+    if (this.lastAnswer) {
+      this.request({ action: 'answer', sessionId: this.sessionId, answer: this.lastAnswer }, this.lastAnswer);
+    } else {
+      this.start();
+    }
   },
 
   pickOption(e: { currentTarget: { dataset: { value?: string } } }) {
@@ -125,7 +150,9 @@ Page({
   },
 
   submit(answer: string) {
-    this.request(this.data.messages, answer);
+    if (!this.sessionId) return;
+    const a = answer.length > 200 ? answer.slice(0, 200) : answer;
+    this.request({ action: 'answer', sessionId: this.sessionId, answer: a }, a);
   },
 
   finishEarly() {

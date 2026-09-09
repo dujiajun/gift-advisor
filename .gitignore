@@ -20,5 +20,8 @@ packages/gift-agent/index.js
 *.log
 .DS_Store
 
+# local sqlite session db
+.data/
+
 # typescript incremental cache
 *.tsbuildinfo

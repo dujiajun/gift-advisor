@@ -1,6 +1,7 @@
 /**
  * 与服务端 Agent 的通信层（与 web 版 POST /api/agent 协议一致）。
- * 客户端只负责保存 messages 并原样回传，Agent 循环在服务端运行。
+ * 会话状态在服务端：客户端只保存 sessionId（轮次 ID），凭它 answer / resume，
+ * 不接触 LLM 消息原文。
  *
  * 两条通道（config.ts 里切换 AGENT_BACKEND）：
  * - 'cloudbase'：wx.cloud.callFunction 调用云函数 gift-agent（推荐，免域名白名单）
@@ -30,37 +31,56 @@ export interface Report {
   gifts: Gift[];
 }
 
-export interface Pending {
-  kind: 'question' | 'report';
-  toolCallId?: string;
+export interface PendingQuestion {
+  kind: 'question';
   narration?: string;
-  question?: string;
-  options?: QuestionOption[];
-  askedCount?: number;
-  report?: Report;
+  question: string;
+  options: QuestionOption[];
+  askedCount: number;
 }
+
+export interface PendingReport {
+  kind: 'report';
+  narration?: string;
+  report: Report;
+  askedCount: number;
+}
+
+export type Pending = PendingQuestion | PendingReport;
 
 export interface AgentResponse {
   ok: boolean;
+  sessionId?: string;
+  pending: Pending | null;
+  askedCount?: number;
   demo?: boolean;
   error?: string;
-  messages: unknown[];
-  pending: Pending | null;
 }
 
-interface AgentCallPayload {
-  messages: unknown[];
-  answer?: string;
+/** 客户端请求：开始新会话 / 凭 sessionId 回答 / 凭 sessionId 恢复现场 */
+export type ClientRequest =
+  | { action: 'start' }
+  | { action: 'answer'; sessionId: string; answer: string }
+  | { action: 'resume'; sessionId: string };
+
+/** 本地保存 sessionId 的 key（恢复现场用） */
+export const SESSION_KEY = 'gift-advisor:session-id';
+
+export function savedSessionId(): string {
+  return (wx.getStorageSync(SESSION_KEY) as string) || '';
 }
 
-/** 调用服务端 Agent：开始新会话传 messages=[]，回答问题带上完整历史 + answer */
-export function callAgent(messages: unknown[], answer?: string): Promise<AgentResponse> {
-  const data: AgentCallPayload = { messages, answer: answer || undefined };
+export function clearSavedSession(): void {
+  wx.removeStorageSync(SESSION_KEY);
+}
+
+/** 调用服务端 Agent */
+export function callAgent(data: ClientRequest): Promise<AgentResponse> {
   return AGENT_BACKEND === 'cloudbase' ? callViaCloudFunction(data) : callViaHttp(data);
 }
 
 /** CloudBase 通道：调用云函数，返回的 AgentResponse 与 HTTP 版同构 */
-function callViaCloudFunction(data: AgentCallPayload): Promise<AgentResponse> {
+function callViaCloudFunction(data: ClientRequest): Promise<AgentResponse> {
   return new Promise((resolve, reject) => {
     wx.cloud.callFunction({
       name: CLOUD_FUNCTION_NAME,
@@ -81,7 +101,7 @@ function callViaCloudFunction(data: AgentCallPayload): Promise<AgentResponse> {
 }
 
 /** HTTP 通道：直连 Next.js 的 POST /api/agent */
-function callViaHttp(data: AgentCallPayload): Promise<AgentResponse> {
+function callViaHttp(data: ClientRequest): Promise<AgentResponse> {
   return new Promise((resolve, reject) => {
     wx.request({
       url: `${BASE_URL}/api/agent`,
@@ -102,20 +122,4 @@ function callViaHttp(data: AgentCallPayload): Promise<AgentResponse> {
       },
     });
   });
-}
-
-interface AssistantLike {
-  role?: string;
-  tool_calls?: { function?: { name?: string } }[];
-}
-
-/** 统计已提问次数（assistant 发出过 ask_user_question 的轮数） */
-export function countAsked(messages: unknown[]): number {
-  let n = 0;
-  for (const m of messages as AssistantLike[]) {
-    if (m && m.role === 'assistant' && Array.isArray(m.tool_calls)) {
-      if (m.tool_calls.some((tc) => tc && tc.function && tc.function.name === 'ask_user_question')) n++;
-    }
-  }
-  return n;
 }

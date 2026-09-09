@@ -1,8 +1,8 @@
-import { appendAnswer, countAsked, initMessages } from './history';
-import { sanitizeMessages } from './wire/messages';
-import { normalizeReport } from './wire/normalize';
-import { safeJson } from './wire/json';
-import type { AgentResponse, WireMessage } from './types';
+import { appendAnswer, countAsked, initMessages } from '@gift-advisor/agent-core/history';
+import { sanitizeMessages } from '@gift-advisor/agent-core/wire/messages';
+import { normalizeReport } from '@gift-advisor/agent-core/wire/normalize';
+import { safeJson } from '@gift-advisor/agent-core/wire/json';
+import type { AgentRunResult, WireMessage } from '@gift-advisor/agent-core/types';
 
 /**
  * 演示模式 Agent：未配置 LLM_API_KEY 时使用。
@@ -75,7 +75,7 @@ const SCRIPT = [
   },
 ];
 
-export async function runMockAgent(prevMessages: WireMessage[], answer?: string): Promise<AgentResponse> {
+export async function runMockAgent(prevMessages: WireMessage[], answer?: string): Promise<AgentRunResult> {
   const messages = sanitizeMessages(prevMessages);
 
   if (messages.length === 0) {
@@ -104,12 +104,10 @@ export async function runMockAgent(prevMessages: WireMessage[], answer?: string)
       ],
     });
     return {
-      ok: true,
       demo: true,
       messages,
       pending: {
         kind: 'question',
-        toolCallId: id,
         narration: q.narration,
         question: q.question,
         options: q.options,
@@ -126,7 +124,14 @@ export async function runMockAgent(prevMessages: WireMessage[], answer?: string)
     if (parsed?.user_answer) answers.push(parsed.user_answer);
   }
 
-  const [who = '那位重要的人', rel = '好朋友', occasion = '特别的日子', budget = '¥100-300', style = '有品位', wish = '惊喜'] = answers;
+  const [
+    who = '那位重要的人',
+    rel = '好朋友',
+    occasion = '特别的日子',
+    budget = '¥100-300',
+    style = '有品位',
+    wish = '惊喜',
+  ] = answers;
 
   const report = normalizeReport({
     intro: `${DEMO_NOTE} 根据你的描述：送给${who}（${rel}），${occasion}，预算 ${budget}，TA 是「${style}」，你想传达「${wish}」。参谋从百宝袋里掏出了这 3 件宝贝：`,
@@ -177,7 +182,6 @@ export async function runMockAgent(prevMessages: WireMessage[], answer?: string)
   messages.push({ role: 'tool', tool_call_id: id, content: 'ok' });
 
   return {
-    ok: true,
     demo: true,
     messages,
     pending: { kind: 'report', narration, report, askedCount: asked },

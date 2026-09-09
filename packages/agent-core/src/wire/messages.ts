@@ -1,14 +1,14 @@
-import type { WireMessage } from '../types';
-import { isRecord } from './json';
+import type { AgentRequest, WireMessage } from '@gift-advisor/agent-core/types';
+import { isRecord } from '@gift-advisor/agent-core/wire/json';
 
 /**
  * 客户端请求的入口边界：
- * - sanitizeMessages：把客户端回传的 unknown 消息历史清洗成 WireMessage[]
- *   （reasoning_content 会保留，供历史完整回传）
- * - parseAgentRequest：解析请求体（POST /api/agent 的 body，或云函数的 event）
+ * - sanitizeMessages：服务端内部持有的历史在 runner 之间传递时的清洗（幂等）
+ * - parseAgentRequest：解析客户端请求体（POST /api/agent 的 body / 云函数 event）
+ *   → start | answer | resume；格式非法返回 null（由 service 转成错误响应）
  */
 
-/** 清洗客户端回传的消息历史：只保留合法字段，防止注入垃圾数据 */
+/** 清洗消息历史：只保留合法字段，防止脏数据进入 LLM 请求（幂等，可重复调用） */
 export function sanitizeMessages(input: unknown): WireMessage[] {
   if (!Array.isArray(input)) return [];
   const out: WireMessage[] = [];
@@ -29,7 +29,8 @@ export function sanitizeMessages(input: unknown): WireMessage[] {
               type: 'function',
               function: {
                 name: String(fn.name),
-                arguments: typeof fn.arguments === 'string' ? fn.arguments : JSON.stringify(fn.arguments ?? {}),
+                arguments:
+                  typeof fn.arguments === 'string' ? fn.arguments : JSON.stringify(fn.arguments ?? {}),
               },
             };
           });
@@ -46,21 +47,27 @@ export function sanitizeMessages(input: unknown): WireMessage[] {
   return out;
 }
 
-export interface AgentRequest {
-  messages: WireMessage[];
-  answer?: string;
-}
-
 /**
- * 解析客户端请求体（Web 版 POST /api/agent 的 body，或云函数的 event）：
- * - messages 经 sanitizeMessages 只保留合法字段
- * - answer 为非空字符串时 trim 并截断到 200 字符，否则视为 undefined
+ * 解析客户端请求体：
+ * - 空 body（null/undefined/{}）视同 { action: 'start' }
+ * - answer 需要 sessionId + 非空 answer（trim，截断 200 字符）
+ * - resume 需要 sessionId
+ * - 其余（未知 action / 缺字段 / 类型不对）返回 null
  */
-export function parseAgentRequest(body: unknown): AgentRequest {
-  const req = isRecord(body) ? body : {};
-  const rawAnswer = typeof req.answer === 'string' ? req.answer.trim().slice(0, 200) : '';
-  return {
-    messages: sanitizeMessages(req.messages),
-    answer: rawAnswer || undefined,
-  };
+export function parseAgentRequest(body: unknown): AgentRequest | null {
+  if (body === null || body === undefined) return { action: 'start' };
+  if (!isRecord(body)) return null;
+  if (body.action === undefined) {
+    return Object.keys(body).length === 0 ? { action: 'start' } : null;
+  }
+  if (body.action === 'start') return { action: 'start' };
+  if (body.action === 'answer' || body.action === 'resume') {
+    const sessionId = typeof body.sessionId === 'string' ? body.sessionId.trim() : '';
+    if (!sessionId) return null;
+    if (body.action === 'resume') return { action: 'resume', sessionId };
+    const answer = typeof body.answer === 'string' ? body.answer.trim().slice(0, 200) : '';
+    if (!answer) return null;
+    return { action: 'answer', sessionId, answer };
+  }
+  return null;
 }

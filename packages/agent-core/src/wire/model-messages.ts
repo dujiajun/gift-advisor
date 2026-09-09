@@ -1,6 +1,6 @@
 import type { ModelMessage } from 'ai';
-import type { RawToolCall, WireMessage } from '../types';
-import { isRecord, safeJson } from './json';
+import type { RawToolCall, WireMessage } from '@gift-advisor/agent-core/types';
+import { isRecord, safeJson } from '@gift-advisor/agent-core/wire/json';
 
 /**
  * 我们的对外的消息协议（OpenAI wire 风格，客户端只存储原样回传）
@@ -37,14 +37,12 @@ export function toModelMessages(messages: WireMessage[]): ModelPrompt {
       const calls = m.tool_calls ?? [];
       const content = [
         { type: 'text' as const, text: m.content },
-        ...calls.map(
-          (tc): { type: 'tool-call'; toolCallId: string; toolName: string; input: unknown } => ({
-            type: 'tool-call',
-            toolCallId: tc.id,
-            toolName: tc.function.name,
-            input: safeJson<Record<string, unknown>>(tc.function.arguments, {}),
-          }),
-        ),
+        ...calls.map((tc): { type: 'tool-call'; toolCallId: string; toolName: string; input: unknown } => ({
+          type: 'tool-call',
+          toolCallId: tc.id,
+          toolName: tc.function.name,
+          input: safeJson<Record<string, unknown>>(tc.function.arguments, {}),
+        })),
       ];
       out.push({ role: 'assistant', content });
       toolNames = new Map(calls.map((tc) => [tc.id, tc.function.name]));
@@ -55,7 +53,12 @@ export function toModelMessages(messages: WireMessage[]): ModelPrompt {
       out.push({
         role: 'tool',
         content: [
-          { type: 'tool-result', toolCallId: m.tool_call_id ?? '', toolName, output: { type: 'text', value: m.content } },
+          {
+            type: 'tool-result',
+            toolCallId: m.tool_call_id ?? '',
+            toolName,
+            output: { type: 'text', value: m.content },
+          },
         ],
       });
     }

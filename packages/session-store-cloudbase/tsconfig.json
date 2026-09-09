@@ -9,10 +9,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "isolatedModules": true,
-    "types": ["node"],
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    "types": ["node"]
   },
   "include": ["src/**/*.ts"]
 }

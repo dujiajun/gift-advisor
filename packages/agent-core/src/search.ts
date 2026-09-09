@@ -33,7 +33,9 @@ export async function webSearch(query: string): Promise<string> {
     const lines: string[] = [];
     if (data.answer) lines.push(`摘要：${data.answer}`);
     for (const r of (data.results ?? []).slice(0, 5)) {
-      lines.push(`【${r.title ?? '无标题'}】${String(r.content ?? '').slice(0, 300)}（来源: ${r.url ?? ''}）`);
+      lines.push(
+        `【${r.title ?? '无标题'}】${String(r.content ?? '').slice(0, 300)}（来源: ${r.url ?? ''}）`,
+      );
     }
     return lines.length ? lines.join('\n') : '（没有搜到结果，请基于已有知识继续。）';
   } catch (e) {

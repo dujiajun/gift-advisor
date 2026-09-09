@@ -1,7 +1,7 @@
 'use client';
 
-import { useRef, useState } from 'react';
-import type { AgentResponse, Gift, PendingQuestion, Report, WireMessage } from '@gift-advisor/agent-core';
+import { useEffect, useRef, useState } from 'react';
+import type { AgentResponse, Gift, PendingQuestion, Report } from '@gift-advisor/agent-core';
 
 const MAX_Q = 10;
 const MEDALS = ['🥇 首推', '🥈 备选', '🥉 备选'];
@@ -13,11 +13,14 @@ const CONFETTI = Array.from({ length: 16 }, (_, i: number) => ({
   duration: 5 + (i % 5),
   size: 14 + ((i * 7) % 14),
 }));
+const STORAGE_KEY = 'gift-advisor:session-id';
+
+type ClientRequest = { action: 'start' } | { action: 'answer'; sessionId: string; answer: string };
 
 export default function Page() {
   const [started, setStarted] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [messages, setMessages] = useState<WireMessage[]>([]);
+  const [sessionId, setSessionId] = useState('');
   const [pending, setPending] = useState<PendingQuestion | null>(null);
   const [report, setReport] = useState<Report | null>(null);
   const [narration, setNarration] = useState('');
@@ -25,32 +28,20 @@ export default function Page() {
   const [error, setError] = useState('');
   const [demo, setDemo] = useState(false);
   const [copied, setCopied] = useState(false);
-  const lastAnswerRef = useRef<string | undefined>(undefined);
+  const lastReqRef = useRef<ClientRequest | null>(null);
 
-  async function call(answer?: string): Promise<void> {
-    lastAnswerRef.current = answer;
+  async function post(body: ClientRequest | { action: 'resume'; sessionId: string }): Promise<void> {
     setLoading(true);
     setError('');
     try {
       const res = await fetch('/api/agent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages, answer }),
+        body: JSON.stringify(body),
       });
       const data = (await res.json()) as AgentResponse;
       if (!res.ok || !data.ok) throw new Error(data.error || `请求失败（${res.status}）`);
-      setMessages(data.messages ?? []);
-      setDemo(Boolean(data.demo));
-      setNarration(data.pending?.narration ?? '');
-      if (data.pending?.kind === 'report') {
-        setReport(data.pending.report);
-        setPending(null);
-      } else if (data.pending?.kind === 'question') {
-        setPending(data.pending);
-        setCustom('');
-      } else {
-        throw new Error('参谋走神了，再试一次');
-      }
+      applyResponse(data);
     } catch (e) {
       setError(e instanceof Error ? e.message : '网络开小差了，请重试');
     } finally {
@@ -58,15 +49,44 @@ export default function Page() {
     }
   }
 
-  function start(): void {
-    lastAnswerRef.current = undefined;
+  function applyResponse(data: AgentResponse): void {
     setStarted(true);
-    setMessages([]);
+    setDemo(Boolean(data.demo));
+    if (data.sessionId) {
+      setSessionId(data.sessionId);
+      window.localStorage.setItem(STORAGE_KEY, data.sessionId);
+    }
+    setNarration(data.pending?.narration ?? '');
+    if (data.pending?.kind === 'report') {
+      setReport(data.pending.report);
+      setPending(null);
+    } else if (data.pending?.kind === 'question') {
+      setPending(data.pending);
+      setReport(null);
+      setCustom('');
+    } else {
+      throw new Error('参谋走神了，再试一次');
+    }
+  }
+
+  // 进入页面：本地有保存的 sessionId 则恢复现场（当前问题或最终报告）
+  useEffect(() => {
+    const saved = window.localStorage.getItem(STORAGE_KEY);
+    if (!saved) return;
+    post({ action: 'resume', sessionId: saved }).catch(() => window.localStorage.removeItem(STORAGE_KEY));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function start(): void {
+    window.localStorage.removeItem(STORAGE_KEY);
+    lastReqRef.current = { action: 'start' };
+    setStarted(true);
+    setSessionId('');
     setPending(null);
     setReport(null);
     setNarration('');
     setError('');
-    call(undefined);
+    post({ action: 'start' });
   }
 
   function goHome(): void {
@@ -79,7 +99,13 @@ export default function Page() {
 
   function answer(text: string): void {
     const t = text.trim();
-    if (t && !loading) call(t.slice(0, 200));
+    if (!t || loading || !sessionId) return;
+    lastReqRef.current = { action: 'answer', sessionId, answer: t.slice(0, 200) };
+    post(lastReqRef.current);
+  }
+
+  function retry(): void {
+    if (lastReqRef.current) post(lastReqRef.current);
   }
 
   async function copyReport(): Promise<void> {
@@ -105,10 +131,18 @@ export default function Page() {
   if (!started) {
     return (
       <main className="app">
-        <div className="deco cloud-1" aria-hidden>☁️</div>
-        <div className="deco cloud-2" aria-hidden>☁️</div>
-        <div className="deco star-1" aria-hidden>⭐</div>
-        <div className="deco star-2" aria-hidden>✨</div>
+        <div className="deco cloud-1" aria-hidden>
+          ☁️
+        </div>
+        <div className="deco cloud-2" aria-hidden>
+          ☁️
+        </div>
+        <div className="deco star-1" aria-hidden>
+          ⭐
+        </div>
+        <div className="deco star-2" aria-hidden>
+          ✨
+        </div>
 
         <section className="hero">
           <div className="hero-gift">🎁</div>
@@ -122,20 +156,24 @@ export default function Page() {
           <p className="tagline">🎮 送礼大冒险 · AI 参谋陪你选出好礼</p>
         </section>
 
-        <button className="btn-start" onClick={start}>🎮 我要送礼</button>
+        <button className="btn-start" onClick={start}>
+          🎮 我要送礼
+        </button>
         <p className="note">回答 5~10 个问题，参谋献上 3 份好礼</p>
         <p className="footer">AI 生成结果仅供参考 · 最珍贵的是心意 💖</p>
       </main>
     );
   }
 
-  const askedCount = pending?.askedCount ?? 0;
+  const askedCount = pending?.askedCount ?? (report ? MAX_Q : 0);
   const progress = report ? 100 : Math.min(100, (askedCount / MAX_Q) * 100);
 
   return (
     <main className="app">
       <header className="topbar">
-        <button className="btn-back" onClick={goHome} aria-label="返回首页">🏠</button>
+        <button className="btn-back" onClick={goHome} aria-label="返回首页">
+          🏠
+        </button>
         <div className="progress-wrap">
           <div className="progress-label">
             <span>{report ? '🏆 任务完成！' : `任务进度 第 ${askedCount} / ${MAX_Q} 问`}</span>
@@ -158,13 +196,15 @@ export default function Page() {
       {error && (
         <div className="error-box">
           <span>⚠️ {error}</span>
-          <button className="retry-btn" onClick={() => call(lastAnswerRef.current)}>重试</button>
+          <button className="retry-btn" onClick={retry}>
+            重试
+          </button>
         </div>
       )}
 
       {!report && !loading && pending && (
         <>
-          <section className="quest-card" key={pending.toolCallId}>
+          <section className="quest-card" key={`${sessionId}-${pending.askedCount}`}>
             <span className="quest-tag">第 {pending.askedCount} 问</span>
             <p className="quest-text">{pending.question}</p>
           </section>
@@ -214,7 +254,8 @@ export default function Page() {
         <div className="loading-card">
           <div className="loading-gift">🎁</div>
           <div className="loading-text">
-            参谋思考中<span className="dots" />
+            参谋思考中
+            <span className="dots" />
           </div>
         </div>
       )}
@@ -262,7 +303,9 @@ export default function Page() {
               {g.tags.length > 0 && (
                 <div className="gift-tags">
                   {g.tags.map((t, j) => (
-                    <span key={j} className="tag">{t}</span>
+                    <span key={j} className="tag">
+                      {t}
+                    </span>
                   ))}
                 </div>
               )}
@@ -270,8 +313,12 @@ export default function Page() {
           ))}
 
           <div className="report-actions">
-            <button className="btn-again" onClick={start}>🔁 再问一次</button>
-            <button className="btn-copy" onClick={copyReport}>{copied ? '✅ 已复制' : '📋 复制报告'}</button>
+            <button className="btn-again" onClick={start}>
+              🔁 再问一次
+            </button>
+            <button className="btn-copy" onClick={copyReport}>
+              {copied ? '✅ 已复制' : '📋 复制报告'}
+            </button>
           </div>
           <p className="footer">AI 生成结果仅供参考 · 送出心意最珍贵 💖</p>
         </>

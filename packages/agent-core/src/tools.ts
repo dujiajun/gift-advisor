@@ -1,6 +1,6 @@
 import { tool } from 'ai';
 import { z } from 'zod';
-import { webSearch } from './search';
+import { webSearch } from '@gift-advisor/agent-core/search';
 
 /**
  * 暴露给 LLM Agent 的工具集（AI SDK tool + zod schema）。

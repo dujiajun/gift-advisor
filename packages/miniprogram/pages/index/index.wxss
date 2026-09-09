@@ -12,10 +12,30 @@
   pointer-events: none;
   opacity: 0.85;
 }
-.cloud-1 { top: 6%; left: -60rpx; font-size: 128rpx; animation: floaty 7s ease-in-out infinite; }
-.cloud-2 { top: 16%; right: -48rpx; font-size: 104rpx; animation: floaty 9s ease-in-out 1.2s infinite; }
-.star-1 { top: 38%; left: 12%; font-size: 52rpx; animation: twinkle 2.6s ease-in-out infinite; }
-.star-2 { top: 30%; right: 20%; font-size: 44rpx; animation: twinkle 3.2s ease-in-out 0.8s infinite; }
+.cloud-1 {
+  top: 6%;
+  left: -60rpx;
+  font-size: 128rpx;
+  animation: floaty 7s ease-in-out infinite;
+}
+.cloud-2 {
+  top: 16%;
+  right: -48rpx;
+  font-size: 104rpx;
+  animation: floaty 9s ease-in-out 1.2s infinite;
+}
+.star-1 {
+  top: 38%;
+  left: 12%;
+  font-size: 52rpx;
+  animation: twinkle 2.6s ease-in-out infinite;
+}
+.star-2 {
+  top: 30%;
+  right: 20%;
+  font-size: 44rpx;
+  animation: twinkle 3.2s ease-in-out 0.8s infinite;
+}
 
 /* ---------- 首页 ---------- */
 .hero {
@@ -50,11 +70,22 @@
   box-shadow: 0 10rpx 0 #33241a;
   animation: bob 2.2s ease-in-out infinite;
 }
-.logo-chip.c0 { background: #ffd45e; }
-.logo-chip.c1 { background: #ff9ecf; }
-.logo-chip.c2 { background: #52cf9f; }
-.logo-chip.c3 { background: #aee3ff; }
-.logo-chip.c4 { background: #9b8cff; color: #fff; }
+.logo-chip.c0 {
+  background: #ffd45e;
+}
+.logo-chip.c1 {
+  background: #ff9ecf;
+}
+.logo-chip.c2 {
+  background: #52cf9f;
+}
+.logo-chip.c3 {
+  background: #aee3ff;
+}
+.logo-chip.c4 {
+  background: #9b8cff;
+  color: #fff;
+}
 .tagline {
   font-size: 30rpx;
   font-weight: 700;
@@ -104,18 +135,40 @@
 
 /* ---------- 动画 ---------- */
 @keyframes bob {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-14rpx); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-14rpx);
+  }
 }
 @keyframes floaty {
-  0%, 100% { transform: translateX(0); }
-  50% { transform: translateX(32rpx); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(32rpx);
+  }
 }
 @keyframes twinkle {
-  0%, 100% { opacity: 0.25; transform: scale(0.85); }
-  50% { opacity: 1; transform: scale(1.1); }
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
 }
 @keyframes throb {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.045); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.045);
+  }
 }

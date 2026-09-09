@@ -1,29 +1,29 @@
 import { generateText, isStepCount } from 'ai';
-import { getModel } from './llm';
-import { agentTools, askQuestionSchema, deliverReportSchema } from './tools';
-import { webSearch } from './search';
-import { appendAnswer, countAsked, initMessages } from './history';
-import { MAX_QUESTIONS, SYSTEM_PROMPT, USER_OPENER } from './prompt';
-import { fromModelMessages, toModelMessages } from './wire/model-messages';
-import { sanitizeMessages } from './wire/messages';
-import { normalizeOptions, normalizeReport } from './wire/normalize';
-import type { AgentResponse, WireMessage } from './types';
+import { getModel } from '@gift-advisor/agent-core/llm';
+import { agentTools, askQuestionSchema, deliverReportSchema } from '@gift-advisor/agent-core/tools';
+import { webSearch } from '@gift-advisor/agent-core/search';
+import { appendAnswer, countAsked, initMessages } from '@gift-advisor/agent-core/history';
+import { MAX_QUESTIONS, SYSTEM_PROMPT, USER_OPENER } from '@gift-advisor/agent-core/prompt';
+import { fromModelMessages, toModelMessages } from '@gift-advisor/agent-core/wire/model-messages';
+import { sanitizeMessages } from '@gift-advisor/agent-core/wire/messages';
+import { normalizeOptions, normalizeReport } from '@gift-advisor/agent-core/wire/normalize';
+import type { AgentRunResult, WireMessage } from '@gift-advisor/agent-core/types';
 
 const MAX_STEPS = 12;
 
 /**
- * 服务端 Agent 主循环（无状态、按轮驱动，天然适配 Serverless）：
- * - 客户端回传完整 messages 历史 + 本轮回答
+ * 服务端 Agent 主循环（按轮驱动；完整历史由服务端持有并持久化）：
+ * - start：messages 为空时注入系统提示词开场
+ * - answer：把用户回答写回历史（appendAnswer），继续推进
  * - generateText 负责单次运行内的多步循环（web_search 带 execute 自动回填），
- *   ask_user_question / deliver_report 不带 execute → 调用即挂起：
- *   要么把问题带回给用户，要么以报告收尾
+ *   ask_user_question / deliver_report 不带 execute → 调用即挂起
  * - 外层 while 只处理需要重新引导模型的情况（参数不完整/闲聊/超提问上限），
  *   并负责 MAX_STEPS 总步数预算
  *
  * 本文件只做流程编排：历史进出走 wire/model-messages，
  * 工具参数校验由 tools.ts 的 zod schema 声明式承担（safeParse 窄化）。
  */
-export async function runAgent(prevMessages: WireMessage[], answer?: string): Promise<AgentResponse> {
+export async function runAgent(prevMessages: WireMessage[], answer?: string): Promise<AgentRunResult> {
   const messages = sanitizeMessages(prevMessages);
 
   if (messages.length === 0) {
@@ -86,12 +86,10 @@ export async function runAgent(prevMessages: WireMessage[], answer?: string): Pr
           break;
         }
         return {
-          ok: true,
           demo: false,
           messages,
           pending: {
             kind: 'question',
-            toolCallId: tc.toolCallId,
             narration: finalStep?.text ?? '',
             question,
             options,
@@ -114,7 +112,6 @@ export async function runAgent(prevMessages: WireMessage[], answer?: string): Pr
         const report = normalizeReport(parsed.data);
         messages.push({ role: 'tool', tool_call_id: tc.toolCallId, content: '报告已送达用户' });
         return {
-          ok: true,
           demo: false,
           messages,
           pending: { kind: 'report', narration: finalStep?.text ?? '', report, askedCount: asked },
@@ -126,7 +123,8 @@ export async function runAgent(prevMessages: WireMessage[], answer?: string): Pr
       // 最终一步既没有提问也没有报告（纯闲聊）：推回工具流程
       messages.push({
         role: 'user',
-        content: '（系统提示：请不要闲聊，调用工具继续流程：ask_user_question 提问，或 deliver_report 出报告。）',
+        content:
+          '（系统提示：请不要闲聊，调用工具继续流程：ask_user_question 提问，或 deliver_report 出报告。）',
       });
     }
   }
