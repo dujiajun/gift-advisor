@@ -1,4 +1,10 @@
-import { handleAgentRequest, MemorySessionStore, type SessionStore } from '@gift-advisor/agent-core';
+import {
+  handleAgentRequest,
+  isRecord,
+  MemorySessionStore,
+  type AgentContext,
+  type SessionStore,
+} from '@gift-advisor/agent-core';
 import { CloudBaseSessionStore } from '@gift-advisor/session-store-cloudbase';
 
 /**
@@ -8,11 +14,12 @@ import { CloudBaseSessionStore } from '@gift-advisor/session-store-cloudbase';
  *   wx.cloud.callFunction({ name: 'gift-agent', data: { action, sessionId?, answer? } })
  *   → event 即 data，返回 AgentResponse（sessionId / pending / askedCount）
  *
- * 调度逻辑在 @gift-advisor/agent-core 的 handleAgentRequest；本文件只做
- * SCF 运行时适配 + 会话存储注入：
- * - 默认 CloudBase 文档数据库（云端生产；集合 agent_sessions）
- * - SESSION_STORE=memory：进程内存（不持久化）
- * - SESSION_STORE=sqlite：本地文件（本机联调，需 Node ≥24 运行时）
+ * 调度逻辑在 @gift-advisor/agent-core 的 handleAgentRequest；本文件只做三件事：
+ * - SCF 运行时适配（main 导出）
+ * - 会话存储注入：默认 CloudBase 文档数据库（云端生产；集合 agent_sessions）；
+ *   SESSION_STORE=memory 进程内存 / sqlite 本地文件（本机联调）
+ * - 身份提取注入（AgentContext）：小程序调用 → 微信 OPENID + 客户端 IP
+ *   （@cloudbase/node-sdk 从函数环境解析）；本地/非微信调用环境为空
  *
  * 环境变量（CloudBase 控制台-云函数配置，见 docs/cloudbase.md）：
  *   LLM_BASE_URL / LLM_API_KEY / LLM_MODEL / TAVILY_API_KEY
@@ -37,4 +44,20 @@ function getStore(): Promise<SessionStore> {
   return storePromise;
 }
 
-export const main = async (event: unknown) => handleAgentRequest(event, await getStore());
+/** 提取调用者身份：云函数内由平台注入（小程序调用带微信身份）；本地试跑返回空 */
+async function getAgentContext(): Promise<AgentContext> {
+  try {
+    const CloudBase = (await import('@cloudbase/node-sdk')).default;
+    const app = CloudBase.init({ env: process.env.CLOUD_ENV_ID || CloudBase.SYMBOL_CURRENT_ENV });
+    const auth = app.auth();
+    const info = auth.getUserInfo() as unknown;
+    const openId = isRecord(info) && typeof info.openId === 'string' ? info.openId : '';
+    const ip = auth.getClientIP();
+    return { userId: openId || undefined, ip: ip || undefined };
+  } catch {
+    return {};
+  }
+}
+
+export const main = async (event: unknown) =>
+  handleAgentRequest(event, await getStore(), await getAgentContext());

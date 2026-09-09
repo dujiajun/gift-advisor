@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@cloudbase/node-sdk": "^3.18.3",
     "@gift-advisor/agent-core": "workspace:*",
     "@gift-advisor/session-store-cloudbase": "workspace:*",
     "@gift-advisor/session-store-sqlite": "workspace:*"

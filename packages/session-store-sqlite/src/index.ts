@@ -49,6 +49,8 @@ class SqliteSessionStore implements SessionStore {
         CREATE TABLE IF NOT EXISTS agent_sessions (
           id         TEXT PRIMARY KEY,
           demo       INTEGER NOT NULL,
+          user_id    TEXT NOT NULL DEFAULT '',
+          ip         TEXT NOT NULL DEFAULT '',
           current    TEXT,
           messages   TEXT NOT NULL,
           turns      TEXT NOT NULL,
@@ -74,6 +76,8 @@ class SqliteSessionStore implements SessionStore {
     return {
       id: String(row.id),
       demo: Boolean(row.demo),
+      userId: String(row.user_id ?? ''),
+      ip: String(row.ip ?? ''),
       current: row.current ? (JSON.parse(String(row.current)) as AgentSession['current']) : null,
       messages: JSON.parse(String(row.messages)) as AgentSession['messages'],
       turns: JSON.parse(String(row.turns)) as AgentSession['turns'],
@@ -87,10 +91,12 @@ class SqliteSessionStore implements SessionStore {
     const updatedAt = new Date().toISOString();
     session.updatedAt = updatedAt;
     db.prepare(
-      `INSERT INTO agent_sessions (id, demo, current, messages, turns, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?)
+      `INSERT INTO agent_sessions (id, demo, user_id, ip, current, messages, turns, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(id) DO UPDATE SET
          demo = excluded.demo,
+         user_id = excluded.user_id,
+         ip = excluded.ip,
          current = excluded.current,
          messages = excluded.messages,
          turns = excluded.turns,
@@ -98,6 +104,8 @@ class SqliteSessionStore implements SessionStore {
     ).run(
       session.id,
       session.demo ? 1 : 0,
+      session.userId,
+      session.ip,
       session.current ? JSON.stringify(session.current) : null,
       JSON.stringify(session.messages),
       JSON.stringify(session.turns),

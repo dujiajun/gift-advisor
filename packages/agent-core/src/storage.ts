@@ -4,9 +4,10 @@ import type { Pending, QuestionOption, Report, WireMessage } from '@gift-advisor
 /**
  * 会话持久化端口 + 默认内存实现。
  * 服务端负责记录每一轮次与每条消息原文；agent-core 只定义端口，
- * 具体基础设施实现由各宿主注入（如 packages/gift-agent 的 CloudBase 文档数据库实现）：
+ * 具体基础设施实现由各宿主注入：
  * - MemorySessionStore：默认，零配置（本地开发/演示；重启丢失）
- * - CloudBase：见 packages/gift-agent/src/storage-cloudbase.ts
+ * - CloudBase：见 packages/session-store-cloudbase
+ * - SQLite：见 packages/session-store-sqlite
  */
 
 /** 一轮的记录：问了什么 / 用户答了什么 / 或最终报告（审计用） */
@@ -32,6 +33,10 @@ export interface AgentSession {
   id: string;
   /** 是否演示模式（决定续聊用哪个 runner，持久化保证 resume 行为一致） */
   demo: boolean;
+  /** 用户标识：小程序 = 微信 OPENID；Web = cookie 访客 id（见 types.ts 的 AgentContext） */
+  userId: string;
+  /** 发起会话时的客户端 IP（审计用） */
+  ip: string;
   /** 完整消息历史（含 tool_calls / reasoning_content，即每条消息原文） */
   messages: WireMessage[];
   /** 逐轮记录（审计） */

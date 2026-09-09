@@ -52,7 +52,7 @@ POST {action:'resume', sessionId}            → 恢复现场（刷新页面/重
          storage.ts SessionStore 端口：每一轮与每条消息原文持久化
 ```
 
-- **持久化**（实现外部注入）：SQLite（本机默认，`.data/agent-sessions.db`）/ CloudBase 文档数据库（云函数默认，集合 `agent_sessions`）/ 内存（兜底）
+- **持久化**（实现外部注入）：SQLite（本机默认，`.data/agent-sessions.db`）/ CloudBase 文档数据库（云函数默认，集合 `agent_sessions`）/ 内存（兜底）；会话记录含用户标识（小程序 = 微信 OPENID，Web = cookie 访客 id `v-<uuid>`）与客户端 IP
 - **推理模型兼容**（deepseek-reasoner / GLM 思考模式等）：响应里的 `reasoning_content` 由 AI SDK 解析为 reasoning，存入服务端会话历史；发给 LLM 前自动剥离（DeepSeek 等接口不接受入参携带，会 400）
 - 问满 10 题注入系统提醒强制收尾；信息足够（≥5 题）时 agent 也可自行提前结束
 - **演示模式**：不配置 `LLM_API_KEY` 时由内置剧本 agent 按同样协议跑通全流程，零成本试用 UI
@@ -191,4 +191,5 @@ gift-advisor/
 - 报告一轮可能包含多次模型调用 + 联网搜索，响应约 10~60s（前端有 loading 动画）；Web 版 `maxDuration=120`（Vercel 需 Fluid Compute），云函数请把超时设为 ≥120s
 - **Vercel 文件系统只读**：线上 Web 版配 `CLOUD_ENV_ID` + `TCB_SECRET_ID/KEY` 走 CloudBase 文档数据库（推荐，与小程序共用免费额度）；都不配时为内存存储，冷启动丢会话；SQLite 仅本机/自托管可用
 - `node:sqlite` 在 Node 24 标记为 experimental（可用，仅启动时有警告）
+- 会话表记录用户标识与 IP 属于用户数据：生产环境请注意隐私合规（告知/脱敏/保留期限），CloudBase 侧可通过安全规则限制访问
 - 演示模式的报告是固定内容，仅用于跑通流程和 UI

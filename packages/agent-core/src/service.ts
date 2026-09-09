@@ -9,7 +9,7 @@ import {
   type AgentSession,
   type SessionStore,
 } from '@gift-advisor/agent-core/storage';
-import type { AgentResponse } from '@gift-advisor/agent-core/types';
+import type { AgentContext, AgentResponse } from '@gift-advisor/agent-core/types';
 
 /**
  * Agent 统一服务入口：Web API（POST /api/agent）与云函数（gift-agent）共用的调度层。
@@ -20,11 +20,15 @@ import type { AgentResponse } from '@gift-advisor/agent-core/types';
  * 存储为外部注入（端口见 storage.ts）：
  * - 缺省用进程内 MemorySessionStore（仅兜底，重启丢失）
  * - 本机开发：注入 @gift-advisor/session-store-sqlite（packages/session-store-sqlite）
- * - 云函数：注入 packages/gift-agent 的 CloudBase 文档数据库实现
+ * - 云函数 / Web 线上：注入 @gift-advisor/session-store-cloudbase（CloudBase 文档数据库）
+ *
+ * 身份审计（AgentContext，由宿主提取）：start 时记录 userId（小程序 OPENID /
+ * Web cookie 访客 id）与客户端 IP，随会话持久化。
  */
 export async function handleAgentRequest(
   body: unknown,
   store: SessionStore = defaultStore,
+  ctx?: AgentContext,
 ): Promise<AgentResponse> {
   const req = parseAgentRequest(body);
   if (!req) {
@@ -37,6 +41,8 @@ export async function handleAgentRequest(
       const session: AgentSession = {
         id: newSessionId(),
         demo: !llmEnabled(),
+        userId: (ctx?.userId ?? '').trim().slice(0, 128),
+        ip: (ctx?.ip ?? '').trim().slice(0, 64),
         messages: [],
         turns: [],
         current: null,

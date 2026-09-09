@@ -10,20 +10,23 @@
  */
 const BASE = process.argv[2] || process.env.BASE_URL || 'http://localhost:3000';
 
-async function call(body) {
+async function call(body, cookie) {
   const res = await fetch(`${BASE}/api/agent`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(cookie ? { cookie } : {}),
+    },
     body: JSON.stringify(body),
   });
   const data = await res.json();
-  return { status: res.status, data };
+  return { status: res.status, data, setCookie: res.headers.get('set-cookie') ?? '' };
 }
 
-async function mustOk(body) {
-  const { status, data } = await call(body);
+async function mustOk(body, cookie) {
+  const { status, data, setCookie } = await call(body, cookie);
   if (status !== 200 || !data.ok) throw new Error(data.error || `HTTP ${status}`);
-  return data;
+  return { data, setCookie };
 }
 
 function assert(cond, msg) {
@@ -34,22 +37,27 @@ function assert(cond, msg) {
 async function main() {
   console.log(`▶ 冒烟测试目标: ${BASE}/api/agent\n`);
 
-  // ── start：新会话 ──
+  // ── start：新会话（首次无 cookie，应签发访客 id）──
   const first = await mustOk({ action: 'start' });
-  const sessionId = first.sessionId;
+  const sessionId = first.data.sessionId;
   assert(sessionId, `start 发放 sessionId（${sessionId.slice(0, 8)}…）`);
-  assert(first.pending?.kind === 'question', 'start 挂起第一问');
-  assert(!('messages' in first), '响应不含 LLM 消息原文（messages 不下发）');
+  assert(first.data.pending?.kind === 'question', 'start 挂起第一问');
+  assert(!('messages' in first.data), '响应不含 LLM 消息原文（messages 不下发）');
+  assert(first.setCookie.startsWith('gift-visitor-id=v-'), '首次请求 Set-Cookie 签发访客 id');
+  const cookie = first.setCookie.split(';')[0];
+  const again = await call({ action: 'start' }, cookie);
+  assert(again.status === 200 && again.data.ok && !again.setCookie, '携带访客 cookie 不重复签发');
 
   // ── resume：恢复现场，应拿回同一道题 ──
   const resumed = await mustOk({ action: 'resume', sessionId });
   assert(
-    resumed.pending?.kind === 'question' && resumed.pending.question === first.pending.question,
+    resumed.data.pending?.kind === 'question' &&
+      resumed.data.pending.question === first.data.pending.question,
     'resume 恢复同一道题',
   );
 
   // ── 逐轮回答直到报告 ──
-  let current = first;
+  let current = first.data;
   let turns = 1;
   for (;;) {
     if (current.pending?.kind === 'report') break;
@@ -58,7 +66,7 @@ async function main() {
     for (const opt of pending.options) console.log(`   ${opt.emoji} ${opt.label}`);
     const answer = pending.options[0]?.label ?? '都行';
     console.log(`→ 自动回答: ${answer}\n`);
-    current = await mustOk({ action: 'answer', sessionId, answer });
+    current = (await mustOk({ action: 'answer', sessionId, answer })).data;
     turns++;
     if (turns > 15) throw new Error('超过 15 轮仍未出报告，流程异常');
   }
@@ -79,7 +87,7 @@ async function main() {
   // ── 边界：报告后 resume 仍可回看 ──
   const replay = await mustOk({ action: 'resume', sessionId });
   assert(
-    replay.pending?.kind === 'report' && replay.pending.report.gifts.length === 3,
+    replay.data.pending?.kind === 'report' && replay.data.pending.report.gifts.length === 3,
     '结束后 resume 可回看报告',
   );
   // ── 边界：非法会话 ──

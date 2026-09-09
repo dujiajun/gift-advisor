@@ -105,3 +105,15 @@ export interface AgentRunResult {
   /** 挂起点：question 或 report */
   pending: PendingQuestion | PendingReport | null;
 }
+
+/**
+ * 会话归属与审计信息，由宿主提取后注入 handleAgentRequest：
+ * - 小程序（云函数）：微信 OPENID + 客户端 IP（@cloudbase/node-sdk）
+ * - Web（Next.js）：cookie 里的访客 id（首次生成并 Set-Cookie）+ 转发头里的 IP
+ */
+export interface AgentContext {
+  /** 用户标识：小程序 = OPENID；Web = 访客 id（如 `v-<uuid>`） */
+  userId?: string;
+  /** 发起会话的客户端 IP（审计用） */
+  ip?: string;
+}

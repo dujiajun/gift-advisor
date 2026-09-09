@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import {
   handleAgentRequest,
@@ -17,6 +18,9 @@ const CORS: Record<string, string> = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 };
+
+/** 访客 id 的 cookie 名（首次请求生成，一年有效；用于会话归属审计） */
+const VISITOR_COOKIE = 'gift-visitor-id';
 
 /**
  * 会话存储（外部注入，首个请求时惰性初始化）：
@@ -40,11 +44,26 @@ function getStore(): SessionStore {
   return store;
 }
 
+/** 从 cookie 读取访客 id；没有则生成 `v-<uuid>`（响应时 Set-Cookie 写回） */
+function getVisitorId(req: Request): { visitorId: string; isNew: boolean } {
+  const cookies = req.headers.get('cookie') ?? '';
+  const m = cookies.match(new RegExp(`(?:^|;\\s*)${VISITOR_COOKIE}=([^;]+)`));
+  if (m) return { visitorId: decodeURIComponent(m[1]).trim().slice(0, 128), isNew: false };
+  return { visitorId: `v-${randomUUID()}`, isNew: true };
+}
+
+/** 客户端 IP：反向代理转发头（Vercel 置信）x-forwarded-for 首个，退回 x-real-ip */
+function clientIp(req: Request): string {
+  const fwd = req.headers.get('x-forwarded-for');
+  const ip = fwd ? (fwd.split(',')[0] ?? '') : (req.headers.get('x-real-ip') ?? '');
+  return ip.trim().slice(0, 64);
+}
+
 export async function OPTIONS(): Promise<Response> {
   return new Response(null, { status: 204, headers: CORS });
 }
 
-/** POST /api/agent —— Agent 的 Web 宿主：HTTP/CORS/状态码适配，调度逻辑在 agent-core */
+/** POST /api/agent —— Agent 的 Web 宿主：HTTP/CORS/状态码 + 访客 cookie，调度逻辑在 agent-core */
 export async function POST(req: Request): Promise<Response> {
   let body: unknown = {};
   try {
@@ -53,6 +72,18 @@ export async function POST(req: Request): Promise<Response> {
     // 允许空 body（视为开始新会话）
   }
 
-  const result: AgentResponse = await handleAgentRequest(body, getStore());
-  return NextResponse.json(result, { status: result.ok ? 200 : 500, headers: CORS });
+  const { visitorId, isNew } = getVisitorId(req);
+  const result: AgentResponse = await handleAgentRequest(body, getStore(), {
+    userId: visitorId,
+    ip: clientIp(req),
+  });
+
+  const res = NextResponse.json(result, { status: result.ok ? 200 : 500, headers: CORS });
+  if (isNew) {
+    res.headers.append(
+      'Set-Cookie',
+      `${VISITOR_COOKIE}=${encodeURIComponent(visitorId)}; Path=/; Max-Age=31536000; SameSite=Lax; HttpOnly`,
+    );
+  }
+  return res;
 }

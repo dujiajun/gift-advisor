@@ -45,12 +45,17 @@ assert(
   const req = cr(import.meta.url);
   const { DatabaseSync } = req('node:sqlite');
   const db = new DatabaseSync('.data/agent-sessions.db');
-  const row = db.prepare('SELECT id, turns FROM agent_sessions WHERE id = ?').get(r1.sessionId);
+  const row = db.prepare('SELECT id, user_id, ip, turns FROM agent_sessions WHERE id = ?').get(r1.sessionId);
   db.close();
   const turns = JSON.parse(String(row?.turns ?? '[]'));
   assert(
     row?.id === r1.sessionId && turns.length === 2 && turns[0].answer === '女生',
     'SQLite 已记录每轮（含用户回答）',
+  );
+  // 本地试跑无微信身份：身份列存在且为空串（云端则为 OPENID / 客户端 IP）
+  assert(
+    typeof row?.user_id === 'string' && typeof row?.ip === 'string',
+    'SQLite 已记录身份列（user_id / ip）',
   );
 }
 

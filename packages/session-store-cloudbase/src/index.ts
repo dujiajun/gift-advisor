@@ -48,8 +48,13 @@ export class CloudBaseSessionStore implements SessionStore {
     const res = await col.doc(sessionId).get();
     const data = Array.isArray(res.data) ? res.data[0] : res.data;
     if (!isRecord(data)) return null;
-    const { id, ...rest } = data as Record<string, unknown> & { id?: unknown };
-    return { ...(rest as unknown as Omit<AgentSession, 'id'>), id: typeof id === 'string' ? id : sessionId };
+    const { id, userId, ip, ...rest } = data as Record<string, unknown>;
+    return {
+      ...(rest as unknown as Omit<AgentSession, 'id' | 'userId' | 'ip'>),
+      userId: typeof userId === 'string' ? userId : '',
+      ip: typeof ip === 'string' ? ip : '',
+      id: typeof id === 'string' ? id : sessionId,
+    };
   }
 
   async save(session: AgentSession): Promise<void> {

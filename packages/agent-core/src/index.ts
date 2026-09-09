@@ -35,6 +35,7 @@ export { isRecord, safeJson } from '@gift-advisor/agent-core/wire/json';
 
 // 领域类型
 export type {
+  AgentContext,
   AgentRequest,
   AgentResponse,
   AgentRunResult,
