@@ -320,9 +320,10 @@ export default function Page() {
               {copied ? '✅ 已复制' : '📋 复制报告'}
             </button>
           </div>
-          <p className="footer">AI 生成结果仅供参考 · 送出心意最珍贵 💖</p>
         </>
       )}
+
+      <p className="footer">AI 生成结果仅供参考 · 送出心意最珍贵 💖</p>
     </main>
   );
 }

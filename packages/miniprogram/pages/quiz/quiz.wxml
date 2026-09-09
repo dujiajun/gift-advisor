@@ -32,7 +32,7 @@
 
   <block wx:elif="{{question}}">
     <view class="quest-card">
-      <view class="quest-tag">第 {{askedCount + 1}} 问</view>
+      <view class="quest-tag">第 {{askedCount}} 问</view>
       <view class="quest-text">{{question}}</view>
     </view>
 

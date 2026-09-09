@@ -45,6 +45,10 @@ body {
   padding: 14px 16px 64px;
   position: relative;
   z-index: 1;
+  /* 纵向 flex + 最小全屏高：免责声明 footer 始终吸到页面最底部 */
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
 }
 
 /* ---------- 漂浮装饰 ---------- */
@@ -92,18 +96,22 @@ body {
   filter: drop-shadow(0 10px 0 rgba(51, 36, 26, 0.18));
 }
 .logo {
+  /* 行宽即查询容器：cqw 单位让字牌在宽、高、字号里都按行宽等比缩放，
+     7 块字牌 + 6 个 6px 间距恒占一行，末字不换行 */
+  container-type: inline-size;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: center;
   gap: 6px;
   margin: 26px 0 14px;
 }
 .logo-chip {
+  --chip-w: min(46px, calc((100cqw - 36px) / 7));
   display: inline-grid;
   place-items: center;
-  width: 46px;
-  height: 50px;
-  font-size: 26px;
+  width: var(--chip-w);
+  height: calc(var(--chip-w) + 4px);
+  font-size: calc(var(--chip-w) * 0.565);
   font-weight: 900;
   background: var(--paper);
   border: 3px solid var(--ink);
@@ -169,7 +177,9 @@ body {
   text-align: center;
   font-size: 11px;
   opacity: 0.55;
-  margin-top: 40px;
+  /* auto 外边距把 footer 推到 flex 容器底部；padding-top 保证内容多时仍有间距 */
+  margin-top: auto;
+  padding-top: 40px;
 }
 
 /* ---------- 顶栏 & 进度 ---------- */
@@ -386,6 +396,10 @@ body {
 }
 .send-btn {
   flex: none;
+  /* 按钮被 flex 拉伸到与输入框同高，flex 居中让"送出"保持垂直居中 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 15px;
   font-weight: 900;
   font-family: inherit;
@@ -394,7 +408,7 @@ body {
   border: 3px solid var(--ink);
   border-radius: 14px;
   box-shadow: 0 4px 0 var(--ink);
-  padding: 0 18px;
+  padding: 0 14px;
   cursor: pointer;
 }
 .send-btn:active {
@@ -758,11 +772,6 @@ body {
 }
 
 @media (max-width: 380px) {
-  .logo-chip {
-    width: 40px;
-    height: 44px;
-    font-size: 22px;
-  }
   .quest-text {
     font-size: 18px;
   }
