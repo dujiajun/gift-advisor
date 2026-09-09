@@ -1,0 +1,23 @@
+{
+  "name": "gift-advisor",
+  "version": "1.0.0",
+  "private": true,
+  "description": "这次送什么礼物 — AI 送礼参谋（Web Next.js + 微信小程序，服务端 LLM Agent）",
+  "packageManager": "pnpm@10.34.4",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "pnpm --filter gift-quest-web dev",
+    "build": "pnpm -r build",
+    "start": "pnpm --filter gift-quest-web start",
+    "typecheck": "pnpm -r typecheck",
+    "build:web": "pnpm --filter gift-quest-web build",
+    "build:function": "pnpm --filter gift-agent-function build",
+    "smoke": "node packages/web/scripts/smoke-test.mjs http://localhost:3000",
+    "test:function": "pnpm build:function && node -r ./scripts/load-env.cjs scripts/test-function.mjs"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild"]
+  }
+}

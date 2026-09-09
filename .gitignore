@@ -13,6 +13,9 @@ out/
 # deployment
 .vercel
 
+# cloud function build output（pnpm build:function 生成，勿手改）
+packages/gift-agent/index.js
+
 # misc
 *.log
 .DS_Store
