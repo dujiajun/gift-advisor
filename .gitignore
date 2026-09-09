@@ -19,3 +19,6 @@ packages/gift-agent/index.js
 # misc
 *.log
 .DS_Store
+
+# typescript incremental cache
+*.tsbuildinfo
