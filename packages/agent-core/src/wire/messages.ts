@@ -1,5 +1,6 @@
 import type { AgentRequest, WireMessage } from '@gift-advisor/agent-core/types';
 import { isRecord } from '@gift-advisor/agent-core/wire/json';
+import { truncate } from '@gift-advisor/agent-core/wire/text';
 
 /**
  * 客户端请求的入口边界：
@@ -65,7 +66,7 @@ export function parseAgentRequest(body: unknown): AgentRequest | null {
     const sessionId = typeof body.sessionId === 'string' ? body.sessionId.trim() : '';
     if (!sessionId) return null;
     if (body.action === 'resume') return { action: 'resume', sessionId };
-    const answer = typeof body.answer === 'string' ? body.answer.trim().slice(0, 200) : '';
+    const answer = typeof body.answer === 'string' ? truncate(body.answer.trim(), 200) : '';
     if (!answer) return null;
     return { action: 'answer', sessionId, answer };
   }

@@ -1,9 +1,11 @@
 import type { Gift, QuestionOption, Report } from '@gift-advisor/agent-core/types';
 import { isRecord } from '@gift-advisor/agent-core/wire/json';
+import { truncate } from '@gift-advisor/agent-core/wire/text';
 
 /**
  * 规整 agent（LLM）给出的业务数据：选项与礼物报告。
  * 输入来自模型的 JSON 参数，形状不可信，这里负责兜底、截断、补默认值。
+ * 截断一律走 truncate（按码点），因为这些文本常带 emoji，切开代理对会写不进库。
  */
 
 /** 规整 agent 给出的选项：1~4 个，补齐 emoji，截断过长文本 */
@@ -13,12 +15,12 @@ export function normalizeOptions(raw: unknown): QuestionOption[] {
   const out: QuestionOption[] = [];
   for (const o of list.slice(0, 4)) {
     if (typeof o === 'string') {
-      if (o.trim()) out.push({ label: o.trim().slice(0, 30), emoji: emojiPool[out.length % 4] });
+      if (o.trim()) out.push({ label: truncate(o.trim(), 30), emoji: emojiPool[out.length % 4] });
     } else if (isRecord(o)) {
       if (typeof o.label === 'string' && o.label.trim()) {
         out.push({
-          label: o.label.trim().slice(0, 30),
-          emoji: typeof o.emoji === 'string' && o.emoji ? o.emoji.slice(0, 4) : emojiPool[out.length % 4],
+          label: truncate(o.label.trim(), 30),
+          emoji: typeof o.emoji === 'string' && o.emoji ? truncate(o.emoji, 4) : emojiPool[out.length % 4],
         });
       }
     }
@@ -42,8 +44,8 @@ export function normalizeReport(args: ReportInput): Report {
     return {
       rank: i + 1,
       name: str(obj.name, `神秘礼物 ${i + 1}`),
-      emoji: str(obj.emoji, '🎁').slice(0, 4),
-      price: str(obj.price, '价格未知').slice(0, 20),
+      emoji: truncate(str(obj.emoji, '🎁'), 4),
+      price: truncate(str(obj.price, '价格未知'), 20),
       reason: str(obj.reason, ''),
       tip: str(obj.tip, ''),
       match: Number.isFinite(matchNum) ? Math.max(1, Math.min(100, Math.round(matchNum))) : 80,

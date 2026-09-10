@@ -14,6 +14,7 @@
     "build:web": "pnpm --filter gift-quest-web build",
     "build:function": "pnpm --filter gift-agent-function build",
     "smoke": "node packages/web/scripts/smoke-test.mjs http://localhost:3000",
+    "test:text": "pnpm --filter @gift-advisor/agent-core test",
     "test:function": "pnpm build:function && node -r ./scripts/load-env.cjs scripts/test-function.mjs"
   },
   "devDependencies": {

@@ -16,7 +16,9 @@
   position: relative;
   z-index: 1;
 }
-.back {
+/* 顶栏两个图标按钮：返回首页 / 重新开始（重新开始全程可见，不必等报告页） */
+.back,
+.restart {
   width: 80rpx;
   height: 80rpx;
   flex: none;
@@ -29,7 +31,8 @@
   border-radius: 24rpx;
   box-shadow: 0 8rpx 0 #33241a;
 }
-.back.pressed {
+.back.pressed,
+.restart.pressed {
   transform: translateY(8rpx);
   box-shadow: none;
 }

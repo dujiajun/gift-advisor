@@ -11,7 +11,8 @@
     "./*": "./src/*.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node scripts/test-text.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^3.0.45",

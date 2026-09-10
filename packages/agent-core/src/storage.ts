@@ -55,8 +55,20 @@ export interface SessionStore {
 
 const rand = (n = 12): string => randomBytes(n).toString('base64url');
 
+/**
+ * 会话 ID 的形状：`s-` + base64url。
+ * 客户端回传的 sessionId 必须先过这一关才允许碰存储——它同时是 CloudBase 的文档
+ * 主键（_id），非法值（空串、超长、带奇怪字符）会让 DB 层直接抛参数错误。
+ */
+const SESSION_ID_PATTERN = /^s-[A-Za-z0-9_-]{8,64}$/;
+
 export function newSessionId(): string {
   return `s-${rand()}`;
+}
+
+/** 校验客户端回传的 sessionId 是否可能是本服务发放的（形状合法） */
+export function isSessionId(value: unknown): value is string {
+  return typeof value === 'string' && SESSION_ID_PATTERN.test(value);
 }
 
 /** 把 agent 挂起结果落成一轮记录 */

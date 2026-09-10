@@ -59,4 +59,27 @@ assert(
   );
 }
 
+// emoji 边界回归：超长 emoji 答案（截断点落在代理对中间）不能污染会话
+// 背景：含孤立代理项的字符串会被 CloudBase 整档拒绝（INVALID_PARAM），
+// 这里验证协议层已按码点截断（存储层的 sanitizeDeep 兜底见 agent-core 的 test-text）。
+{
+  const r4 = await main({ action: 'answer', sessionId: r1.sessionId, answer: `${'🎁'.repeat(300)}` });
+  assert(r4.ok, '超长 emoji 答案仍能推进轮次（截断未破坏代理对）');
+
+  const { createRequire: cr } = await import('node:module');
+  const req = cr(import.meta.url);
+  const { DatabaseSync } = req('node:sqlite');
+  const db = new DatabaseSync('.data/agent-sessions.db');
+  const row = db.prepare('SELECT turns FROM agent_sessions WHERE id = ?').get(r1.sessionId);
+  db.close();
+  const raw = String(row?.turns ?? '[]');
+  assert(
+    Buffer.from(raw, 'utf8').toString('utf8') === raw,
+    'SQLite 里的轮次记录无孤立代理项（UTF-8 往返无失真）',
+  );
+  const turns = JSON.parse(raw);
+  const answer = turns.map((t) => t.answer).filter((a) => typeof a === 'string').at(-1) ?? '';
+  assert([...answer].length === 200, `答案按码点截断到 200（实际 ${[...answer].length}）`);
+}
+
 console.log('\n✅ 云函数本地试跑通过');

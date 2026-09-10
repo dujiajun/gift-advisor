@@ -44,17 +44,26 @@ function getStore(): Promise<SessionStore> {
   return storePromise;
 }
 
-/** 提取调用者身份：云函数内由平台注入（小程序调用带微信身份）；本地试跑返回空 */
+/**
+ * 提取调用者身份：云函数内由平台注入（小程序调用带微信身份）；本地试跑返回空。
+ *
+ * 客户端 IP 不能用 auth.getClientIP()：它读的是 TCB_SOURCE_IP，而微信/TCB 运行时
+ * 注入的是 WX_CLIENTIP / WX_CLIENTIPV6（node-sdk 的 getCloudbaseContext 里可见），
+ * 所以那个 API 在本环境永远返回空串（实测库里 32 条会话 ip 全空）。
+ * 客户端可能是 IPv6（网关 accesslog 的 sourceIp 常为 v6），故 v4 取不到时回落 v6。
+ */
 async function getAgentContext(): Promise<AgentContext> {
   try {
     // CJS 具名导出，不能用 .default（见 session-store-cloudbase 同款注释）
-    const { init, SYMBOL_CURRENT_ENV } = await import('@cloudbase/node-sdk');
+    const { init, SYMBOL_CURRENT_ENV, getCloudbaseContext } = await import('@cloudbase/node-sdk');
     const app = init({ env: process.env.CLOUD_ENV_ID || SYMBOL_CURRENT_ENV });
-    const auth = app.auth();
-    const info = auth.getUserInfo() as unknown;
+    const info = app.auth().getUserInfo() as unknown;
     const openId = isRecord(info) && typeof info.openId === 'string' ? info.openId : '';
-    const ip = auth.getClientIP();
-    return { userId: openId || undefined, ip: ip || undefined };
+    const { WX_CLIENTIP, WX_CLIENTIPV6 } = getCloudbaseContext();
+    return {
+      userId: openId || undefined,
+      ip: (WX_CLIENTIP || WX_CLIENTIPV6 || '').trim() || undefined,
+    };
   } catch {
     return {};
   }

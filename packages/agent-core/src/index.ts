@@ -8,6 +8,7 @@
  *     - model-messages.ts WireMessage[] ↔ AI SDK ModelMessage[]（reasoning 只进不出）
  *     - normalize.ts      模型输出的展示规整（选项/礼物报告的兜底与截断）
  *     - json.ts           基础判断与安全 JSON 解析
+ *     - text.ts           按码点截断 + 孤立代理项清洗（emoji 不能被 slice 切开）
  * - 工具参数校验  由 tools.ts 的 zod schema 声明式承担（AI SDK 自动校验）
  * - 会话持久化    只有端口（SessionStore）在 core；实现外部注入：
  *     - 本机开发：@gift-advisor/session-store-sqlite（packages/session-store-sqlite）
@@ -26,12 +27,18 @@ export { MAX_QUESTIONS, SYSTEM_PROMPT, USER_OPENER } from '@gift-advisor/agent-c
 export { appendAnswer, countAsked, initMessages } from '@gift-advisor/agent-core/history';
 
 // 会话持久化端口与内存兜底实现
-export { MemorySessionStore, makeTurnRecord, newSessionId } from '@gift-advisor/agent-core/storage';
+export {
+  MemorySessionStore,
+  isSessionId,
+  makeTurnRecord,
+  newSessionId,
+} from '@gift-advisor/agent-core/storage';
 export type { AgentSession, SessionStore, TurnRecord } from '@gift-advisor/agent-core/storage';
 
 // 协议边界层
 export { parseAgentRequest, sanitizeMessages } from '@gift-advisor/agent-core/wire/messages';
 export { isRecord, safeJson } from '@gift-advisor/agent-core/wire/json';
+export { sanitizeDeep, stripLoneSurrogates, truncate } from '@gift-advisor/agent-core/wire/text';
 
 // 领域类型
 export type {

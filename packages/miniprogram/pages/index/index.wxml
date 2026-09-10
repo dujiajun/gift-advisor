@@ -14,10 +14,10 @@
         style="animation-delay: {{index * 0.09}}s"
       >{{item}}</view>
     </view>
-    <view class="tagline">🎮 送礼大冒险 · AI 参谋陪你选出好礼</view>
+    <view class="tagline">🎮 送礼大冒险 · 参谋陪你选出好礼</view>
   </view>
 
   <button class="btn-start" hover-class="pressed" bindtap="start">🎮 我要送礼</button>
   <view class="note">回答 5~10 个问题，参谋献上 3 份好礼</view>
-  <view class="footer">AI 生成结果仅供参考 · 最珍贵的是心意 💖</view>
+  <view class="footer">建议仅供参考 · 最珍贵的是心意 💖</view>
 </view>

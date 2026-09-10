@@ -81,6 +81,7 @@ pnpm dev                              # http://localhost:3000
 | `pnpm build:function` | 只构建云函数（Vite 单文件）                                 |
 | `pnpm smoke`          | Web 端演示模式端到端冒烟（需先 `pnpm dev` 或 `pnpm start`） |
 | `pnpm test:function`  | 云函数本地试跑（SQLite 持久化；未配 key 走演示模式）        |
+| `pnpm test:text`      | 文本边界回归（按码点截断 / 孤立代理项 / sessionId 形状）    |
 
 冒烟测试（演示模式全流程，无需任何 key）：
 

@@ -189,18 +189,30 @@ body {
   gap: 12px;
   margin-bottom: 6px;
 }
-.btn-back {
+.btn-back,
+.btn-restart {
   width: 40px;
   height: 40px;
   flex: none;
   font-size: 16px;
+  font-family: inherit;
   background: var(--paper);
   border: 3px solid var(--ink);
   border-radius: 12px;
   box-shadow: 0 4px 0 var(--ink);
   cursor: pointer;
 }
-.btn-back:active {
+/* 待确认态要放下「确认？」两个字，放宽成胶囊 */
+.btn-restart.confirming {
+  width: auto;
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 900;
+  color: #fff;
+  background: linear-gradient(180deg, var(--primary), var(--primary-deep));
+}
+.btn-back:active,
+.btn-restart:active {
   transform: translateY(4px);
   box-shadow: none;
 }

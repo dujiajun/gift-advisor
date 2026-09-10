@@ -2,7 +2,9 @@ import { llmEnabled } from '@gift-advisor/agent-core/llm';
 import { runAgent } from '@gift-advisor/agent-core/agent';
 import { runMockAgent } from '@gift-advisor/agent-core/mock-agent';
 import { parseAgentRequest } from '@gift-advisor/agent-core/wire/messages';
+import { truncate } from '@gift-advisor/agent-core/wire/text';
 import {
+  isSessionId,
   MemorySessionStore,
   makeTurnRecord,
   newSessionId,
@@ -41,8 +43,8 @@ export async function handleAgentRequest(
       const session: AgentSession = {
         id: newSessionId(),
         demo: !llmEnabled(),
-        userId: (ctx?.userId ?? '').trim().slice(0, 128),
-        ip: (ctx?.ip ?? '').trim().slice(0, 64),
+        userId: truncate((ctx?.userId ?? '').trim(), 128),
+        ip: truncate((ctx?.ip ?? '').trim(), 64),
         messages: [],
         turns: [],
         current: null,
@@ -53,6 +55,9 @@ export async function handleAgentRequest(
       await store.create(session);
       return sessionResponse(session);
     }
+
+    // sessionId 是存储主键，形状不合法直接当「不存在」处理（客户端会自行清掉本地记录重开）
+    if (!isSessionId(req.sessionId)) return { ok: false, pending: null, error: '会话不存在或已过期' };
 
     const session = await store.find(req.sessionId);
     if (!session) return { ok: false, pending: null, error: '会话不存在或已过期' };

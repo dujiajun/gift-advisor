@@ -96,6 +96,7 @@ export const CLOUD_ENV_ID = '<你的环境ID>'; // 第 1 步记下的
 - 微信开发者工具打开 `packages/miniprogram/`，编译预览：能正常提问/出报告即通
 - 未配 `LLM_API_KEY` 时首屏回答带「演示模式」字样，说明链路已通、只差 key
 - 本地（不经云端）试跑：`pnpm test:function`（SQLite 存储，验证 start/answer/resume 全协议）
+- 文本边界回归：`pnpm test:text`（按码点截断 / 孤立代理项清洗 / sessionId 形状，直接跑 agent-core 源码）
 - 排查：CloudBase 控制台 → 云函数 → `gift-agent` → 日志查询（或 MCP `queryFunctions(action="listFunctionLogs", functionName="gift-agent")`）
 - 会话数据：控制台 → 数据库 → `agent_sessions` 集合（`messages` 每条消息原文、`turns` 逐轮问答记录）
 
@@ -104,6 +105,9 @@ export const CLOUD_ENV_ID = '<你的环境ID>'; // 第 1 步记下的
 - **调用报 `-404013 / env not found`**：`CLOUD_ENV_ID` 填错，或环境未绑定该小程序 AppID（回看第 5 步）
 - **超时（状态码 433 / `function timeout`）**：报告轮较慢，确认函数超时已设为 ≥120s
 - **数据库报 collection 不存在**：先完成第 2 步创建 `agent_sessions` 集合
+- **报 `[InvalidParameter] Check request parameter fail`（`/error-code/basic/INVALID_PARAM`）**：**不是**网关或鉴权问题——请求已经进了函数，死在会话写入（`database.modifyDocument`）。已知成因是**字符串里含孤立 UTF-16 代理项（半个 emoji）**：TCB 文档数据库会整档拒绝这种文档，一条脏字符串就让整轮会话存不下来（所以库里查不到那份内容，写入根本没落）。封堵在三处：`agent-core/src/wire/text.ts` 的 `truncate` 按码点截断（替换掉全部 `.slice()`）、CloudBase 存储写入前 `sanitizeDeep` 兜底、`service` 层拦截形状非法的 sessionId；`pnpm test:text` 是这条的回归测试。排查手段：CLS 日志按 `request_id` 过滤能拿到 SCF 打出的完整堆栈（MCP `queryLogs`；`queryFunctions(listFunctionLogs)` 在新版本上报「不支持更多日志检索」不可用）
+- **会话文档里的 `id` / `_id`**：只有一个主键，`_id` 就是 sessionId（也即 `AgentSession.id`），文档里**没有**第二个 `id` 字段。映射集中在 `packages/session-store-cloudbase/src/index.ts` 的 `toDoc`/`fromDoc`（写入不带 `_id`，读取用 `_id` 当 id），不要在别处散着剥字段
+- **客户端 IP 记为空**：`auth.getClientIP()` 读的是 `TCB_SOURCE_IP`，微信/TCB 运行时并不注入这个键，所以它永远返回空串。要读 `WX_CLIENTIP`（IPv4）/ `WX_CLIENTIPV6`（网关 accesslog 里客户端常常就是 v6），见 `packages/gift-agent/src/index.ts` 的 `getAgentContext()`
 - **想改回 HTTP 直连**：`AGENT_BACKEND = 'http'` 并配好 `BASE_URL`（正式环境需 https + 备案域名）
 - **更新函数**：改完代码后 `pnpm build:function`，再 `manageFunctions(action="updateFunctionCode", ...)`
 - **Web 版（Vercel）用 CloudBase 存储**：已内置（`packages/session-store-cloudbase`，Web 与云函数共用）。在 Vercel 环境变量里配 `CLOUD_ENV_ID` + `TCB_SECRET_ID` + `TCB_SECRET_KEY` 即自动启用（云函数外调用需要密钥，函数内免密钥）

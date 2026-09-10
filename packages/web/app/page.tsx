@@ -1,7 +1,13 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { AgentResponse, Gift, PendingQuestion, Report } from '@gift-advisor/agent-core';
+import {
+  truncate,
+  type AgentResponse,
+  type Gift,
+  type PendingQuestion,
+  type Report,
+} from '@gift-advisor/agent-core';
 
 const MAX_Q = 10;
 const MEDALS = ['🥇 首推', '🥈 备选', '🥉 备选'];
@@ -28,9 +34,13 @@ export default function Page() {
   const [error, setError] = useState('');
   const [demo, setDemo] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [confirmRestart, setConfirmRestart] = useState(false);
   const lastReqRef = useRef<ClientRequest | null>(null);
+  /** 请求代次：重新开始时自增，让在途响应回来时自动作废（避免旧轮次覆盖新状态） */
+  const reqSeqRef = useRef(0);
 
   async function post(body: ClientRequest | { action: 'resume'; sessionId: string }): Promise<void> {
+    const seq = ++reqSeqRef.current;
     setLoading(true);
     setError('');
     try {
@@ -40,12 +50,14 @@ export default function Page() {
         body: JSON.stringify(body),
       });
       const data = (await res.json()) as AgentResponse;
+      if (seq !== reqSeqRef.current) return;
       if (!res.ok || !data.ok) throw new Error(data.error || `请求失败（${res.status}）`);
       applyResponse(data);
     } catch (e) {
+      if (seq !== reqSeqRef.current) return;
       setError(e instanceof Error ? e.message : '网络开小差了，请重试');
     } finally {
-      setLoading(false);
+      if (seq === reqSeqRef.current) setLoading(false);
     }
   }
 
@@ -77,6 +89,13 @@ export default function Page() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // 「确认重新开始」的待确认状态 3 秒后自动撤销
+  useEffect(() => {
+    if (!confirmRestart) return;
+    const timer = setTimeout(() => setConfirmRestart(false), 3000);
+    return () => clearTimeout(timer);
+  }, [confirmRestart]);
+
   function start(): void {
     window.localStorage.removeItem(STORAGE_KEY);
     lastReqRef.current = { action: 'start' };
@@ -97,10 +116,20 @@ export default function Page() {
     setError('');
   }
 
+  /** 重新开始：顶栏常驻（不必等到报告页）。先点一下变「确认？」防误触，3 秒后自动复原 */
+  function onRestartClick(): void {
+    if (!confirmRestart) {
+      setConfirmRestart(true);
+      return;
+    }
+    setConfirmRestart(false);
+    start();
+  }
+
   function answer(text: string): void {
     const t = text.trim();
     if (!t || loading || !sessionId) return;
-    lastReqRef.current = { action: 'answer', sessionId, answer: t.slice(0, 200) };
+    lastReqRef.current = { action: 'answer', sessionId, answer: truncate(t, 200) };
     post(lastReqRef.current);
   }
 
@@ -183,6 +212,14 @@ export default function Page() {
             <div className="progress-fill" style={{ width: `${progress}%` }} />
           </div>
         </div>
+        <button
+          className={`btn-restart${confirmRestart ? ' confirming' : ''}`}
+          onClick={onRestartClick}
+          title={confirmRestart ? '再点一下确认重新开始' : '重新开始（当前进度会清空）'}
+          aria-label={confirmRestart ? '确认重新开始' : '重新开始'}
+        >
+          {confirmRestart ? '确认？' : '🔁'}
+        </button>
       </header>
 
       <div className="npc">

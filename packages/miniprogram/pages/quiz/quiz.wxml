@@ -10,6 +10,7 @@
         <view class="progress-fill" style="width: {{progress}}%"></view>
       </view>
     </view>
+    <view class="restart" hover-class="pressed" aria-label="重新开始" bindtap="restart">🔁</view>
   </view>
 
   <view class="npc">
@@ -110,5 +111,5 @@
     </view>
   </block>
 
-  <view class="footer">AI 生成结果仅供参考 · 送出心意最珍贵 💖</view>
+  <view class="footer">建议仅供参考 · 送出心意最珍贵 💖</view>
 </view>
